@@ -5,7 +5,7 @@
 - **Created**: 2026-02-03
 - **Author(s)**: Mark D. Roth (@markdroth), Caitie McCaffrey (@CaitieM20),
   Gabriel Zimmerman (@gjz22)
-- **Sponsor**: None
+- **Sponsor**: Caitie McCaffrey (@CaitieM20)
 - **PR**: https://github.com/modelcontextprotocol/specification/pull/{NUMBER}
 
 ## Abstract
@@ -164,15 +164,21 @@ responses, the map values are the responses to those requests.  Here's
 how that would look in the typescript MCP schema:
 
 ```typescript
-export interface InputRequests { [key: string]: ServerRequest; }
+export type InputRequest = 
+  | CreateMessageReqeust
+  | ElicitReqeust
+  | ListRootsRequest
 
-export interface InputResponses { [key: string]: ClientResult; }
+export interface InputRequests { [key: string]: InputRequest; }
+
+export type InputResponse = 
+  | CreateMessageResponse
+  | ElicitResult
+  | ListRootsResult
+
+
+export interface InputResponses { [key: string]: InputResponse; }
 ```
-
-TODO: The above schema definitions are not quite right, because
-ServerRequest and ServerResult include the JSON-RPC request id field,
-which is not necessary here.  Figure out what schema refactoring is
-needed to get the types without that field.
 
 The keys are assigned by the server when issuing the requests.  The client
 will send the response for each request using the corresponding key.
