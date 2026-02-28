@@ -2,10 +2,10 @@
 
 - **Status**: Draft
 - **Type**: Standards Track
-- **Created**: 2026-20-03
+- **Created**: 2026-02-03
 - **Author(s)**: Mark D. Roth (@markdroth), Caitie McCaffrey (@CaitieM20),
   Gabriel Zimmerman (@gjz22)
-- **Sponsor**: Caitie McCaffrey (@CaitieM20)
+- **Sponsor**: None
 - **PR**: https://github.com/modelcontextprotocol/specification/pull/{NUMBER}
 
 ## Abstract
@@ -125,7 +125,11 @@ There are two main approaches that can be used to solve this problem today:
 
 Also, both of these approaches rely on the use of an SSE stream, which
 causes problems in environments that cannot support long-lived
-connections.
+connections.  They also require an instance of the tool to stay in memory
+in a particular server instance indefinitely.  This is particularly
+problematic for elicitation requests specifically, since the result may
+not come from the user for an unbounded amount of time (e.g., it could
+be days or months, or maybe even never).
 
 The goal of this SEP is to propose a simpler way to handle the pattern
 of server-initiated requests within the context of a client-initiated
@@ -160,14 +164,15 @@ responses, the map values are the responses to those requests.  Here's
 how that would look in the typescript MCP schema:
 
 ```typescript
-export type InputRequest = ElicitationCreateRequest | SamplingCreateRequest;
+export interface InputRequests { [key: string]: ServerRequest; }
 
-export interface InputRequests { [key: string]: InputRequest; }
-
-export type InputResponse = ElicitResult | CreateMessageResult;
-
-export interface InputResponses { [key: string]: InputResponse; }
+export interface InputResponses { [key: string]: ClientResult; }
 ```
+
+TODO: The above schema definitions are not quite right, because
+ServerRequest and ServerResult include the JSON-RPC request id field,
+which is not necessary here.  Figure out what schema refactoring is
+needed to get the types without that field.
 
 The keys are assigned by the server when issuing the requests.  The client
 will send the response for each request using the corresponding key.
@@ -225,22 +230,26 @@ The client would then send the responses in the following form:
 
 ```json5
 "inputResponses": {
-  // Elicitation response (ElicitResult).
+  // Elicitation response.
   "github_login": {
-    "action": "accept",
-    "content": {
-      "name": "octocat"
+    "result": {
+      "action": "accept",
+      "content": {
+        "name": "octocat"
+      }
     }
   },
-  // Sampling response (CreateMessageResult).
+  // Sampling response.
   "capital_of_france": {
-    "role": "assistant",
-    "content": {
-      "type": "text",
-      "text": "The capital of France is Paris."
-    },
-    "model": "claude-3-sonnet-20240307",
-    "stopReason": "endTurn"
+    "result": {
+      "role": "assistant",
+      "content": {
+        "type": "text",
+        "text": "The capital of France is Paris."
+      },
+      "model": "claude-3-sonnet-20240307",
+      "stopReason": "endTurn"
+    }
   }
 }
 ```
@@ -250,7 +259,12 @@ tools and another for persistent tools.
 
 ### Ephemeral Tool Workflow
 
-For ephemeral tools, we will adopt the following workflow:
+For the ephemeral use case, in addition to input requests, we introduce
+the concept of request state.  In cases where the server needs more
+information, the request state is sent to the client which echoes back
+the state to the server, allowing the server to remain stateless.
+
+We will adopt the following workflow for ephemeral tools:
 
 1. Client sends tool call request.
 2. Server sends back a single response indicating that the request is
@@ -292,18 +306,14 @@ export interface IncompleteResult extends Result {
   requestState?: string;
 }
 
-// New fields added directly to RequestParams so that any client-initiated
-// request can carry input responses and request state when retrying after
-// an IncompleteResult.
-export interface RequestParams {
-  _meta?: RequestMetaObject;
-  // Responses to server-initiated input requests from a previous
-  // IncompleteResult. For each key in the response's inputRequests
+// New request parameter type that includes fields in a retried request.
+// These parameters may be included in any client-initiated request.
+export interface RetryAugmentedRequestParams extends RequestParams {
+  // New field to carry the responses for the server's requests from the
+  // IncompleteResult message.  For each key in the response's inputRequests
   // field, the same key must appear here with the associated response.
   inputResponses?: InputResponses;
   // Request state passed back to the server from the client.
-  // The client must treat this as an opaque blob; it must not
-  // interpret it in any way.
   requestState?: string;
 }
 ```
@@ -378,12 +388,14 @@ Note: This is a contrived example, just to illustrate the flow.
     "name": "get_weather",
     "arguments": {
       "location": "New York"
-    },
+    }
     "inputResponses": {
       "github_login": {
-        "action": "accept",
-        "content": {
-          "name": "octocat"
+        "result": {
+          "action": "accept",
+          "content": {
+            "name": "octocat"
+          }
         }
       }
     },
@@ -496,8 +508,10 @@ server-side storage.
     },
     "inputResponses": {
       "resolution": {
-        "action": "accept",
-        "content": { "resolution": "Duplicate" }
+        "result": {
+          "action": "accept",
+          "content": { "resolution": "Duplicate" }
+        }
       }
     }
   }
@@ -557,8 +571,10 @@ server-side storage.
     },
     "inputResponses": {
       "duplicate_of": {
-        "action": "accept",
-        "content": { "duplicateOfId": 4301 }
+        "result": {
+          "action": "accept",
+          "content": { "duplicateOfId": 4301 }
+        }
       }
     },
     "requestState": "eyJyZXNvbHV0aW9uIjoiRHVwbGljYXRlIn0..."
@@ -675,18 +691,17 @@ The workflow here would look like this:
 
 1. **Server Behavior:**
    - Servers MAY respond to any client-initiated request with a
-     `JSONRPCIncompleteResultResponse`.  This message MAY be sent either
-     as a standalone response or as the final message on an SSE stream,
+     `IncompleteResult`.  This message MAY be sent either as a
+     standalone response or as the final message on an SSE stream,
      although implementations are encouraged to prefer the former.
      If using an SSE stream, servers MUST NOT send any message on the
      stream after the incomplete response message.
-   - The `JSONRPCIncompleteResultResponse` message MAY include an
-     `inputRequests` field.
-   - The `JSONRPCIncompleteResultResponse` message MAY include a
-     `requestState` field.  If specified, this field is an opaque
-     string that is meaningful only to the server.  Servers are free to
-     encode the state in any format (e.g., plain JSON, base64-encoded
-     JSON, encrypted JWT, serialized binary, etc.).
+   - The `IncompleteResult` message MAY include an `inputRequests` field.
+   - The `IncompleteResult` message MAY include a `requestState` field.
+     If specified, this field is an opaque string that is meaningful only
+     to the server.  Servers are free to encode the state in any format
+     (e.g., plain JSON, base64-encoded JSON, encrypted JWT, serialized
+     binary, etc.).
    - If a request contains a `requestState` field, servers MUST always
      validate that state, as the client is an untrusted intermediary.
      If tampering is a concern, servers SHOULD encrypt the `requestState`
@@ -704,19 +719,17 @@ The workflow here would look like this:
      validate any client-supplied data.
 
 2. **Client Behavior:**
-   - If a client receives a `JSONRPCIncompleteResultResponse` message,
-     if the message contains the `inputRequests` field, then the client
-     MUST construct the requested input before retrying the original
-     request.  In contrast, if the message does *not* contain the
-     `inputRequests` field, then the client MAY retry the original
-     request immediately.
-   - If a client receives a `JSONRPCIncompleteResultResponse` message
-     that contains the `requestState` field, it MUST echo back the
-     exact value of that field when retrying the original request.
-     Clients MUST NOT inspect, parse, modify, or make any assumptions
-     about the `requestState` contents.  If the incomplete response does
-     not contain a `requestState` field, the client MUST NOT include one
-     in the retry.
+   - If a client receives a `IncompleteResult` message, if the message
+     contains the `inputRequests` field, then the client MUST construct
+     the requested input before retrying the original request.  In
+     contrast, if the message does *not* contain the `inputRequests`
+     field, then the client MAY retry the original request immediately.
+   - If a client receives a `IncompleteResult` message that contains the
+     `requestState` field, it MUST echo back the exact value of that
+     field when retrying the original request.  Clients MUST NOT inspect,
+     parse, modify, or make any assumptions about the `requestState`
+     contents.  If the incomplete response does not contain a
+     `requestState` field, the client MUST NOT include one in the retry.
 
 ### Persistent Tool Workflow
 
@@ -727,14 +740,14 @@ The workflow for `Tasks` is as follows:
 1. Server sets Task Status to `input_required`. The server can pause
    processing the request at this point.
 2. Client retrieves the Task Status by calling `tasks/get` and sees that more information is needed.
-3. Client calls `tasks/result`
+3. Client calls `task/result`
 4. Server returns the `InputRequests` object.
 5. Client calls `tasks/input_response` request that includes an `InputResponses` object along with `Task` metadata field.
 6. Server resumes processing sets TaskStatus back to `Working`.
 
 Since `Tasks` are likely longer running, have state associated with them, and are likely more costly to compute, the request for more information does not end the originally requested operation (e.g., the tool call). Instead, the server can resume processing once the necessary information is provided.
 
-To align with MRTR semantics, the server will respond to the `tasks/result` request with a `InputRequests` object. Both of these will have the same JsonRPC `id`. When the client responds with a `InputResponses` object this is a new client request wit a new JSONRPC `id` and therefore needs a new method name. We propose `tasks/input_response`.
+To align with MRTR semantics, the server will respond to the `task/result` request with a `InputRequests` object. Both of these will have the same JsonRPC `id`. When the client responds with a `InputResponses` object this is a new client request wit a new JSONRPC `id` and therefore needs a new method name. We propose `tasks/input_response`.
 
 The above workflow and below example do not leverage any of the optional Task Status Notifications although this SEP does not preclude their use.
 
@@ -764,10 +777,9 @@ The below example walks through the entire Task Message flow for a Echo Tool whi
     "result":{
         "task":{
             "taskId": "echo_dc792e24-01b5-4c0a-abcb-0559848ca3c5",
-            "status": "working",
+            "status": "Working",
             "statusMessage": "Task has been created for echo tool invocation.",
             "createdAt": "2026-01-27T03:32:48.3148180Z",
-            "lastUpdatedAt": "2026-01-27T03:32:48.3148180Z",
             "ttl": 60000,
             "pollInterval": 100
         }
@@ -797,10 +809,9 @@ The below example walks through the entire Task Message flow for a Echo Tool whi
       "status": "input_required",
       "statusMessage": "Input Required to Proceed call tasks/result",
       "createdAt": "2026-01-27T03:38:07.7534643Z",
-      "lastUpdatedAt": "2026-01-27T03:38:07.7534643Z",
       "ttl": 60000,
       "pollInterval": 100
-    }
+    },
 }
 ```
 
@@ -856,9 +867,11 @@ The below example walks through the entire Task Message flow for a Echo Tool whi
     "params": {
       "inputResponses":{
         "echo_input":{
-          "action": "accept",
-          "content":{
-            "input": "Hello World!"
+          "result":{
+            "action": "accept",
+            "content":{
+              "input": "Hello World!"
+            }
           }
         }
       },
@@ -898,20 +911,19 @@ Client Request
   }
 }
 ```
-10. <b>Server Response</b> with Task status `completed`
+10. <b>Server Response</b> with Task status `Completed`
 ```json
 {
   "id": 5,
   "jsonrpc": "2.0",
   "result":{
     "taskId": "echo_dc792e24-01b5-4c0a-abcb-0559848ca3c5",
-    "status": "completed",
-    "statusMessage": "Task has been completed successfully, call tasks/result",
+    "status": "Completed",
+    "statusMessage": "Task has been completed successfully, call get/result",
     "createdAt": "2026-01-27T03:38:07.7534643Z",
-    "lastUpdatedAt": "2026-01-27T03:38:08.1234567Z",
     "ttl": 60000,
     "pollInterval": 100
-  }
+  },
 }
 ```
 
@@ -924,7 +936,7 @@ Client Message
   "method": "tasks/result",
   "params":{
     "taskId":  "echo_dc792e24-01b5-4c0a-abcb-0559848ca3c5"
-  }
+  },
 }
 ```
 12. <b>Server Response</b> with the final result of the `Task`
@@ -943,7 +955,7 @@ Client Message
         "taskId": "echo_dc792e24-01b5-4c0a-abcb-0559848ca3c5"
       }
     }
-  }
+  },
 }
 ```
 
@@ -956,7 +968,7 @@ Client Message
      `tasks/result` response.
 
 2. **Client Behavior:**
-   - When `tasks/get` shows state `input_required`, clients MUST call
+   - When `tasks/status` shows state `input_required`, clients MUST call
      `tasks/result` to get the input requests, construct the results of
      those requests, and then call `tasks/input_response` with the input
      responses, unless the client is going to cancel the task.
@@ -985,14 +997,18 @@ duration of the task, and there is no way to transition back to the
 ephemeral model.  All subsequent interactions must be performed via the
 Tasks API.
 
-## Error Handling Note
-In both the ephemeral & persistent workflows, the client may send back malformed or invalid responses to the server's requests for more information as part of the `inputResponses` object. 
+### Guidance for Error Handling
+This section provides implementation guidance for error handling in scenarios where the client provides unexpected or malformed data in the `inputResponses` object. 
 
-The server should validate the data provided by the client is a valid `inputResponses` object and that the information inside can be correctly parsed. Protocol errors, like malformed JSON, invalid schema, or internal server errors which prevent the processing of the request should return a `JSONRPCErrorResponse` with an appropriate error code and message.
+As with any received request, the server SHOULD validate the data provided by the client is a valid `inputResponses` object and that the information inside can be correctly parsed. Protocol errors, like malformed JSON, invalid schema, or internal server errors which prevent the processing of the request should return a `JSONRPCErrorResponse` with an appropriate error code and message.
 
-If the client provides a well-formed `inputResponses` object but the data provided is unexpected or missing required information, the server MUST treat these as optional parameters. The server should ignore any unexpected information and proceed with processing the request using the information that is present. If required information is missing, the server should not proceed with processing the request and instead should respond with a new incomplete response. 
+If additional parameters are provided in the `inputResponses` object The server SHOULD treat these as optional parameters. Therefore it SHOULD ignore any unexpected information in the `inputResponses` object that it does not recognize or need. 
 
-We discussed having a specific application level error code returned, however the client may not have enough information to recover in all scenarios. For example, if a Server upgrade happens and the new version requires additional information, the client has no knowledge of this and must request the necessary information again. Therefore, we decided to rely on the existing mechanics of epheremal workflows and the existing state machine of `Tasks` to ensure a client can always recover and request the necessary information again. 
+The client may also fail to send all the information requested in previous `inputRequests`. If the missing information requested is necessary for the server to process the request, then it SHOULD respond with a new `IncompleteResult`. 
+
+We discussed having a specific application level error code returned, however the client may not have enough information to recover in all scenarios. Therefore, we decided to rely on the existing mechanics of requesting more input via `IncompleteResult` to ensure a client can always recover by having the server request the necessary information again. 
+
+Malicious clients could intentionally send incorrect information in the `inputResponses` object, and generate load on the server by causing it to repeatedly request the same information. However, this is not a new concern introduced by this workflow, since malicious clients could already generate load by sending malformed requests. Server implementors can use standard techniques like rate limiting and throttling to protect themselves from such attacks.
 
 In the ephemeral workflow, this would look like the following:
 1. The client retries the original tool call, this time including the `inputResponses` object, but the response is missing required information that the server needs to process the request.
@@ -1005,12 +1021,14 @@ In the ephemeral workflow, this would look like the following:
     "name": "get_weather",
     "arguments": {
       "location": "New York"
-    },
+    }
     "inputResponses": {
       "not_requested_info": {
-        "action": "accept",
-        "content": {
-          "not_requested_param_name": "Information the server did not request"
+        "result": {
+          "action": "accept",
+          "content": {
+            "not_requested_param_name": "Information the server did not request"
+          }
         }
       }
     }
@@ -1059,9 +1077,11 @@ Step 7 from above: <b>Client Request</b> The client mistakenly or maliciously se
     "params": {
       "inputResponses":{
         "echo_input":{
-          "action": "accept",
-          "content":{
-            "not_requested_parameter": "Information the server did not request."
+          "result":{
+            "action": "accept",
+            "content":{
+              "not_requested_parameter": "Information the server did not request."
+            }
           }
         }
       },
@@ -1074,7 +1094,7 @@ Step 7 from above: <b>Client Request</b> The client mistakenly or maliciously se
 }
 ```
 
-Step 8 from above. <b>Server Response</b> Server acknowledges the receipt of the response by sending a `JSONRPCResultResponse`. However, since the response is missing required information, the server does not proceed with processing the taks and leaves the Task status as `input_required`. The next time the client calls `tasks/result`, the server responds with a new `inputRequest` requesting the necessary information again.
+Step 8 from above. <b>Server Response</b> Server acknowledges the receipt of the response by sending a `JSONRPCResultResponse`. However, since the response is missing required information, the server does not proceed with processing the taks and leaves the Task status as `input_required`. The next time the client calls `task/result`, the server responds with a new `inputRequest` requesting the necessary information again.
 ```json
 {
     "id": 4,
