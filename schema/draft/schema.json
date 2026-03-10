@@ -736,9 +736,6 @@
         "CreateMessageRequestParams": {
             "description": "Parameters for a `sampling/createMessage` request.",
             "properties": {
-                "_meta": {
-                    "$ref": "#/$defs/RequestMetaObject"
-                },
                 "includeContext": {
                     "description": "A request to include context from one or more MCP servers (including the caller), to be attached to the prompt.\nThe client MAY ignore this request.\n\nDefault is `\"none\"`. Values `\"thisServer\"` and `\"allServers\"` are soft-deprecated. Servers SHOULD only use these values if the client\ndeclares {@link ClientCapabilities.sampling.context}. These values may be removed in future spec releases.",
                     "enum": [
@@ -747,9 +744,6 @@
                         "thisServer"
                     ],
                     "type": "string"
-                },
-                "inputResponses": {
-                    "$ref": "#/$defs/InputResponses"
                 },
                 "maxTokens": {
                     "description": "The requested maximum number of tokens to sample (to prevent runaway completions).\n\nThe client MAY choose to sample fewer tokens than the requested maximum.",
@@ -771,9 +765,6 @@
                     "$ref": "#/$defs/ModelPreferences",
                     "description": "The server's preferences for which model to select. The client MAY ignore these preferences."
                 },
-                "requestState": {
-                    "type": "string"
-                },
                 "stopSequences": {
                     "items": {
                         "type": "string"
@@ -783,10 +774,6 @@
                 "systemPrompt": {
                     "description": "An optional system prompt the server wants to use for sampling. The client MAY modify or omit this prompt.",
                     "type": "string"
-                },
-                "task": {
-                    "$ref": "#/$defs/TaskMetadata",
-                    "description": "If specified, the caller is requesting task-augmented execution for this request.\nThe request will return a {@link CreateTaskResult} immediately, and the actual result can be\nretrieved later via {@link GetTaskPayloadRequesttasks/result}.\n\nTask augmentation is subject to capability negotiation - receivers MUST declare support\nfor task augmentation of specific request types in their capabilities."
                 },
                 "temperature": {
                     "type": "number"
@@ -919,12 +906,6 @@
         "ElicitRequestFormParams": {
             "description": "The parameters for a request to elicit non-sensitive information from the user via a form in the client.",
             "properties": {
-                "_meta": {
-                    "$ref": "#/$defs/RequestMetaObject"
-                },
-                "inputResponses": {
-                    "$ref": "#/$defs/InputResponses"
-                },
                 "message": {
                     "description": "The message to present to the user describing what information is being requested.",
                     "type": "string"
@@ -932,9 +913,6 @@
                 "mode": {
                     "const": "form",
                     "description": "The elicitation mode.",
-                    "type": "string"
-                },
-                "requestState": {
                     "type": "string"
                 },
                 "requestedSchema": {
@@ -965,10 +943,6 @@
                         "type"
                     ],
                     "type": "object"
-                },
-                "task": {
-                    "$ref": "#/$defs/TaskMetadata",
-                    "description": "If specified, the caller is requesting task-augmented execution for this request.\nThe request will return a {@link CreateTaskResult} immediately, and the actual result can be\nretrieved later via {@link GetTaskPayloadRequesttasks/result}.\n\nTask augmentation is subject to capability negotiation - receivers MUST declare support\nfor task augmentation of specific request types in their capabilities."
                 }
             },
             "required": [
@@ -991,15 +965,9 @@
         "ElicitRequestURLParams": {
             "description": "The parameters for a request to elicit information from the user via a URL in the client.",
             "properties": {
-                "_meta": {
-                    "$ref": "#/$defs/RequestMetaObject"
-                },
                 "elicitationId": {
                     "description": "The ID of the elicitation, which must be unique within the context of the server.\nThe client MUST treat this ID as an opaque value.",
                     "type": "string"
-                },
-                "inputResponses": {
-                    "$ref": "#/$defs/InputResponses"
                 },
                 "message": {
                     "description": "The message to present to the user explaining why the interaction is needed.",
@@ -1009,13 +977,6 @@
                     "const": "url",
                     "description": "The elicitation mode.",
                     "type": "string"
-                },
-                "requestState": {
-                    "type": "string"
-                },
-                "task": {
-                    "$ref": "#/$defs/TaskMetadata",
-                    "description": "If specified, the caller is requesting task-augmented execution for this request.\nThe request will return a {@link CreateTaskResult} immediately, and the actual result can be\nretrieved later via {@link GetTaskPayloadRequesttasks/result}.\n\nTask augmentation is subject to capability negotiation - receivers MUST declare support\nfor task augmentation of specific request types in their capabilities."
                 },
                 "url": {
                     "description": "The URL that the user should navigate to.",
@@ -3870,7 +3831,7 @@
                     "type": "string"
                 },
                 "params": {
-                    "$ref": "#/$defs/TaskInputResponseRequestParams"
+                    "$ref": "#/$defs/TaskAugmentedRequestParams"
                 }
             },
             "required": [
@@ -3878,29 +3839,6 @@
                 "jsonrpc",
                 "method",
                 "params"
-            ],
-            "type": "object"
-        },
-        "TaskInputResponseRequestParams": {
-            "description": "Parameters for a `tasks/input_response` request.\nUsed to deliver client responses to server-initiated input requests\nfor a task in the persistent multi round-trip workflow.",
-            "properties": {
-                "_meta": {
-                    "$ref": "#/$defs/RequestMetaObject"
-                },
-                "inputResponses": {
-                    "$ref": "#/$defs/InputResponses",
-                    "description": "The client's responses to the server's input requests."
-                },
-                "requestState": {
-                    "type": "string"
-                },
-                "task": {
-                    "$ref": "#/$defs/TaskMetadata",
-                    "description": "If specified, the caller is requesting task-augmented execution for this request.\nThe request will return a {@link CreateTaskResult} immediately, and the actual result can be\nretrieved later via {@link GetTaskPayloadRequesttasks/result}.\n\nTask augmentation is subject to capability negotiation - receivers MUST declare support\nfor task augmentation of specific request types in their capabilities."
-                }
-            },
-            "required": [
-                "inputResponses"
             ],
             "type": "object"
         },
