@@ -92,7 +92,7 @@ export type Cursor = string;
  *
  * @internal
  */
-export interface TaskAugmentedRequestParams extends RetryAugmentedRequestParams {
+export interface TaskAugmentedRequestParams extends RequestParams {
   /**
    * If specified, the caller is requesting task-augmented execution for this request.
    * The request will return a {@link CreateTaskResult} immediately, and the actual result can be
@@ -111,6 +111,14 @@ export interface TaskAugmentedRequestParams extends RetryAugmentedRequestParams 
  */
 export interface RequestParams {
   _meta?: RequestMetaObject;
+  /* New field to carry the responses for the server's requests from the
+   * IncompleteResult message.  For each key in the response's inputRequests
+   * field, the same key must appear here with the associated response.
+   */
+  inputResponses?: InputResponses;
+  /* Request state passed back to the server from the client.
+   */
+  requestState?: string;
 }
 
 /** @internal */
@@ -146,9 +154,9 @@ export interface Notification {
  * incomplete - the request is incomplete and the result contains an {@link IncompleteResult} object with instructions for the client to provide additional input before retrying the original request.
  * @category Common Types
  */
-export type ResultType =
-  | "complete" 
-  | "incomplete"; 
+export type ResultType = 
+  |"complete" 
+  | "incomplete";
 
 /**
  * Common result fields.
@@ -415,20 +423,6 @@ export interface IncompleteResult extends Result {
   requestState?: string;
 }
 
-/* New request parameter type that includes fields in a retried request.
- * These parameters may be included in any client-initiated request.
- */
-export interface RetryAugmentedRequestParams extends RequestParams {
-  /* New field to carry the responses for the server's requests from the
-   * IncompleteResult message.  For each key in the response's inputRequests
-   * field, the same key must appear here with the associated response.
-   */
-  inputResponses?: InputResponses;
-  /* Request state passed back to the server from the client.
-   */
-  requestState?: string;
-}
-
 /* Cancellation */
 /**
  * Parameters for a `notifications/cancelled` notification.
@@ -544,7 +538,7 @@ export interface InitializeResult extends Result {
  * @category `initialize`
  */
 export interface InitializeResultResponse extends JSONRPCResultResponse {
-  result: InitializeResult;
+  result: InitializeResult | IncompleteResult;
 }
 
 /**
@@ -923,7 +917,7 @@ export interface PingRequest extends JSONRPCRequest {
  * @category `ping`
  */
 export interface PingResultResponse extends JSONRPCResultResponse {
-  result: EmptyResult;
+  result: EmptyResult | IncompleteResult;
 }
 
 /* Progress notifications */
@@ -1081,7 +1075,7 @@ export interface ListResourceTemplatesResultResponse extends JSONRPCResultRespon
  *
  * @internal
  */
-export interface ResourceRequestParams extends RetryAugmentedRequestParams {
+export interface ResourceRequestParams extends RequestParams {
   /**
    * The URI of the resource. The URI can use any protocol; it is up to the server how to interpret it.
    *
@@ -1181,7 +1175,7 @@ export interface SubscribeRequest extends JSONRPCRequest {
  * @category `resources/subscribe`
  */
 export interface SubscribeResultResponse extends JSONRPCResultResponse {
-  result: EmptyResult;
+  result: EmptyResult | IncompleteResult;
 }
 
 /**
@@ -1214,7 +1208,7 @@ export interface UnsubscribeRequest extends JSONRPCRequest {
  * @category `resources/unsubscribe`
  */
 export interface UnsubscribeResultResponse extends JSONRPCResultResponse {
-  result: EmptyResult;
+  result: EmptyResult | IncompleteResult;
 }
 
 /**
@@ -1416,7 +1410,7 @@ export interface ListPromptsResultResponse extends JSONRPCResultResponse {
  *
  * @category `prompts/get`
  */
-export interface GetPromptRequestParams extends RetryAugmentedRequestParams {
+export interface GetPromptRequestParams extends RequestParams {
   /**
    * The name of the prompt or prompt template.
    */
@@ -1983,7 +1977,7 @@ export type GetTaskResult = Result & Task;
  * @category `tasks/get`
  */
 export interface GetTaskResultResponse extends JSONRPCResultResponse {
-  result: GetTaskResult;
+  result: GetTaskResult | IncompleteResult;
 }
 
 /**
@@ -2063,7 +2057,7 @@ export interface TaskInputResponseRequest extends JSONRPCRequest {
  * @category `tasks/input_response`
  */
 export interface TaskInputResponseResultResponse extends JSONRPCResultResponse {
-  result: Result;
+  result: Result | IncompleteResult;
 }
 
 /**
@@ -2094,7 +2088,7 @@ export type CancelTaskResult = Result & Task;
  * @category `tasks/cancel`
  */
 export interface CancelTaskResultResponse extends JSONRPCResultResponse {
-  result: CancelTaskResult;
+  result: CancelTaskResult | IncompleteResult;
 }
 
 /**
@@ -2121,7 +2115,7 @@ export interface ListTasksResult extends PaginatedResult {
  * @category `tasks/list`
  */
 export interface ListTasksResultResponse extends JSONRPCResultResponse {
-  result: ListTasksResult;
+  result: ListTasksResult | IncompleteResult;
 }
 
 /**
@@ -2180,7 +2174,7 @@ export interface SetLevelRequest extends JSONRPCRequest {
  * @category `logging/setLevel`
  */
 export interface SetLevelResultResponse extends JSONRPCResultResponse {
-  result: EmptyResult;
+  result: EmptyResult | IncompleteResult;
 }
 
 /**
@@ -2704,7 +2698,7 @@ export interface ModelHint {
  * @example Prompt argument completion with context
  * {@includeCode ./examples/CompleteRequestParams/prompt-argument-completion-with-context.json}
  */
-export interface CompleteRequestParams extends RetryAugmentedRequestParams {
+export interface CompleteRequestParams extends RequestParams {
   ref: PromptReference | ResourceTemplateReference;
   /**
    * The argument's information
@@ -2783,7 +2777,7 @@ export interface CompleteResult extends Result {
  * @category `completion/complete`
  */
 export interface CompleteResultResponse extends JSONRPCResultResponse {
-  result: CompleteResult;
+  result: CompleteResult | IncompleteResult;
 }
 
 /**

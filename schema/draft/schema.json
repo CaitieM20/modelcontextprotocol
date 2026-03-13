@@ -294,7 +294,15 @@
                     "type": "string"
                 },
                 "result": {
-                    "$ref": "#/$defs/CancelTaskResult"
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/IncompleteResult"
+                        },
+                        {
+                            "$ref": "#/$defs/CancelTaskResult",
+                            "description": "The result returned for a {@link CancelTaskRequesttasks/cancel} request."
+                        }
+                    ]
                 }
             },
             "required": [
@@ -680,7 +688,14 @@
                     "type": "string"
                 },
                 "result": {
-                    "$ref": "#/$defs/CompleteResult"
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/IncompleteResult"
+                        },
+                        {
+                            "$ref": "#/$defs/CompleteResult"
+                        }
+                    ]
                 }
             },
             "required": [
@@ -1377,7 +1392,15 @@
                     "type": "string"
                 },
                 "result": {
-                    "$ref": "#/$defs/GetTaskResult"
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/IncompleteResult"
+                        },
+                        {
+                            "$ref": "#/$defs/GetTaskResult",
+                            "description": "The result returned for a {@link GetTaskRequesttasks/get} request."
+                        }
+                    ]
                 }
             },
             "required": [
@@ -1560,8 +1583,14 @@
                 "clientInfo": {
                     "$ref": "#/$defs/Implementation"
                 },
+                "inputResponses": {
+                    "$ref": "#/$defs/InputResponses"
+                },
                 "protocolVersion": {
                     "description": "The latest version of the Model Context Protocol that the client supports. The client MAY decide to support older versions as well.",
+                    "type": "string"
+                },
+                "requestState": {
                     "type": "string"
                 }
             },
@@ -1616,7 +1645,14 @@
                     "type": "string"
                 },
                 "result": {
-                    "$ref": "#/$defs/InitializeResult"
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/IncompleteResult"
+                        },
+                        {
+                            "$ref": "#/$defs/InitializeResult"
+                        }
+                    ]
                 }
             },
             "required": [
@@ -2270,7 +2306,14 @@
                     "type": "string"
                 },
                 "result": {
-                    "$ref": "#/$defs/ListTasksResult"
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/IncompleteResult"
+                        },
+                        {
+                            "$ref": "#/$defs/ListTasksResult"
+                        }
+                    ]
                 }
             },
             "required": [
@@ -2583,6 +2626,12 @@
                 "cursor": {
                     "description": "An opaque token representing the current pagination position.\nIf provided, the server should return results starting after this cursor.",
                     "type": "string"
+                },
+                "inputResponses": {
+                    "$ref": "#/$defs/InputResponses"
+                },
+                "requestState": {
+                    "type": "string"
                 }
             },
             "type": "object"
@@ -2662,7 +2711,14 @@
                     "type": "string"
                 },
                 "result": {
-                    "$ref": "#/$defs/Result"
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/Result"
+                        },
+                        {
+                            "$ref": "#/$defs/IncompleteResult"
+                        }
+                    ]
                 }
             },
             "required": [
@@ -3038,6 +3094,12 @@
             "properties": {
                 "_meta": {
                     "$ref": "#/$defs/RequestMetaObject"
+                },
+                "inputResponses": {
+                    "$ref": "#/$defs/InputResponses"
+                },
+                "requestState": {
+                    "type": "string"
                 }
             },
             "type": "object"
@@ -3335,20 +3397,6 @@
                 "incomplete"
             ],
             "type": "string"
-        },
-        "RetryAugmentedRequestParams": {
-            "properties": {
-                "_meta": {
-                    "$ref": "#/$defs/RequestMetaObject"
-                },
-                "inputResponses": {
-                    "$ref": "#/$defs/InputResponses"
-                },
-                "requestState": {
-                    "type": "string"
-                }
-            },
-            "type": "object"
         },
         "Role": {
             "description": "The sender or recipient of messages and data in a conversation.",
@@ -3693,9 +3741,15 @@
                 "_meta": {
                     "$ref": "#/$defs/RequestMetaObject"
                 },
+                "inputResponses": {
+                    "$ref": "#/$defs/InputResponses"
+                },
                 "level": {
                     "$ref": "#/$defs/LoggingLevel",
                     "description": "The level of logging that the client wants to receive from the server. The server should send all logs at this level and higher (i.e., more severe) to the client as {@link LoggingMessageNotificationnotifications/message}."
+                },
+                "requestState": {
+                    "type": "string"
                 }
             },
             "required": [
@@ -3714,7 +3768,14 @@
                     "type": "string"
                 },
                 "result": {
-                    "$ref": "#/$defs/Result"
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/Result"
+                        },
+                        {
+                            "$ref": "#/$defs/IncompleteResult"
+                        }
+                    ]
                 }
             },
             "required": [
@@ -3830,7 +3891,14 @@
                     "type": "string"
                 },
                 "result": {
-                    "$ref": "#/$defs/Result"
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/Result"
+                        },
+                        {
+                            "$ref": "#/$defs/IncompleteResult"
+                        }
+                    ]
                 }
             },
             "required": [
@@ -3937,7 +4005,14 @@
                     "type": "string"
                 },
                 "result": {
-                    "$ref": "#/$defs/Result"
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/Result"
+                        },
+                        {
+                            "$ref": "#/$defs/IncompleteResult"
+                        }
+                    ]
                 }
             },
             "required": [
@@ -4470,7 +4545,14 @@
                     "type": "string"
                 },
                 "result": {
-                    "$ref": "#/$defs/Result"
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/Result"
+                        },
+                        {
+                            "$ref": "#/$defs/IncompleteResult"
+                        }
+                    ]
                 }
             },
             "required": [
