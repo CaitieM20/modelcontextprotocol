@@ -88,23 +88,6 @@ export type ProgressToken = string | number;
 export type Cursor = string;
 
 /**
- * Common params for any task-augmented request.
- *
- * @internal
- */
-export interface TaskAugmentedRequestParams extends RequestParams {
-  /**
-   * If specified, the caller is requesting task-augmented execution for this request.
-   * The request will return a {@link CreateTaskResult} immediately, and the actual result can be
-   * retrieved later via {@link GetTaskPayloadRequest | tasks/result}.
-   *
-   * Task augmentation is subject to capability negotiation - receivers MUST declare support
-   * for task augmentation of specific request types in their capabilities.
-   */
-  task?: TaskMetadata;
-}
-
-/**
  * Common params for any request.
  *
  * @category Common Types
@@ -144,9 +127,10 @@ export interface Notification {
  *
  * complete - the request completed successfully and the result contains the final content.
  * incomplete - the request is incomplete and the result contains an {@link IncompleteResult} object with instructions for the client to provide additional input before retrying the original request.
+ * task - the result contains a {@link Task} object. All responses that return a Task (e.g., `tasks/get`, `tasks/cancel`) MUST set this value.
  * @category Common Types
  */
-export type ResultType = "complete" | "incomplete";
+export type ResultType = "complete" | "incomplete" | "task";
 
 /**
  * Common result fields.
@@ -621,42 +605,6 @@ export interface ClientCapabilities {
   };
 
   /**
-   * Present if the client supports task-augmented requests.
-   */
-  tasks?: {
-    /**
-     * Whether this client supports {@link ListTasksRequest | tasks/list}.
-     */
-    list?: JSONObject;
-    /**
-     * Whether this client supports {@link CancelTaskRequest | tasks/cancel}.
-     */
-    cancel?: JSONObject;
-    /**
-     * Specifies which request types can be augmented with tasks.
-     */
-    requests?: {
-      /**
-       * Task support for sampling-related requests.
-       */
-      sampling?: {
-        /**
-         * Whether the client supports task-augmented {@link CreateMessageRequest | sampling/createMessage} requests.
-         */
-        createMessage?: JSONObject;
-      };
-      /**
-       * Task support for elicitation-related requests.
-       */
-      elicitation?: {
-        /**
-         * Whether the client supports task-augmented {@link ElicitRequest | elicitation/create} requests.
-         */
-        create?: JSONObject;
-      };
-    };
-  };
-  /**
    * Optional MCP extensions that the client supports. Keys are extension identifiers
    * (e.g., "io.modelcontextprotocol/oauth-client-credentials"), and values are
    * per-extension settings objects. An empty object indicates support with no settings.
@@ -747,31 +695,13 @@ export interface ServerCapabilities {
     listChanged?: boolean;
   };
   /**
-   * Present if the server supports task-augmented requests.
+   * Present if the server supports tasks.
    */
   tasks?: {
     /**
      * Whether this server supports {@link ListTasksRequest | tasks/list}.
      */
     list?: JSONObject;
-    /**
-     * Whether this server supports {@link CancelTaskRequest | tasks/cancel}.
-     */
-    cancel?: JSONObject;
-    /**
-     * Specifies which request types can be augmented with tasks.
-     */
-    requests?: {
-      /**
-       * Task support for tool-related requests.
-       */
-      tools?: {
-        /**
-         * Whether the server supports task-augmented {@link CallToolRequest | tools/call} requests.
-         */
-        call?: JSONObject;
-      };
-    };
   };
   /**
    * Optional MCP extensions that the server supports. Keys are extension identifiers
@@ -1658,7 +1588,7 @@ export interface CallToolResult extends Result {
  * @category `tools/call`
  */
 export interface CallToolResultResponse extends JSONRPCResultResponse {
-  result: CallToolResult | IncompleteResult;
+  result: CallToolResult | CreateTaskResult | IncompleteResult;
 }
 
 /**
@@ -1672,8 +1602,7 @@ export interface CallToolResultResponse extends JSONRPCResultResponse {
  *
  * @category `tools/call`
  */
-export interface CallToolRequestParams
-  extends RetryAugmentedRequestParams, TaskAugmentedRequestParams {
+export interface CallToolRequestParams extends RetryAugmentedRequestParams {
   /**
    * The name of the tool.
    */
@@ -1782,6 +1711,9 @@ export interface ToolExecution {
    * - `"required"`: Tool requires task-augmented execution
    *
    * Default: `"forbidden"`
+   *
+   * @deprecated Task support is no longer declared per-tool. Servers may return
+   * a {@link CreateTaskResult} for any tool call without prior declaration.
    */
   taskSupport?: "forbidden" | "optional" | "required";
 }
@@ -1893,6 +1825,9 @@ export interface RelatedTaskMetadata {
 /**
  * Data associated with a task.
  *
+ * @example A working task
+ * {@includeCode ./examples/Task/working-task.json}
+ *
  * @category `tasks`
  */
 export interface Task {
@@ -1940,6 +1875,9 @@ export interface Task {
 /**
  * The result returned for a task-augmented request.
  *
+ * @example Unsolicited task from tool call
+ * {@includeCode ./examples/CreateTaskResult/unsolicited-task-from-tool-call.json}
+ *
  * @category `tasks`
  */
 export interface CreateTaskResult extends Result {
@@ -1948,6 +1886,9 @@ export interface CreateTaskResult extends Result {
 
 /**
  * A successful response for a task-augmented request.
+ *
+ * @example Create task result response
+ * {@includeCode ./examples/CreateTaskResultResponse/create-task-result-response.json}
  *
  * @category `tasks`
  */
@@ -1958,6 +1899,12 @@ export interface CreateTaskResultResponse extends JSONRPCResultResponse {
 /**
  * A request to retrieve the state of a task.
  *
+ * @example Get task request
+ * {@includeCode ./examples/GetTaskRequest/get-task-request.json}
+ *
+ * @example Get task with input responses
+ * {@includeCode ./examples/GetTaskRequest/get-task-with-input-responses.json}
+ *
  * @category `tasks/get`
  */
 export interface GetTaskRequest extends JSONRPCRequest {
@@ -1967,18 +1914,61 @@ export interface GetTaskRequest extends JSONRPCRequest {
      * The task identifier to query.
      */
     taskId: string;
+    /**
+     * Optional field to allow the client to respond to a server's request for more information
+     * when the task is in `input_required` state.
+     */
+    inputResponses?: InputResponses;
   };
 }
 
 /**
  * The result returned for a {@link GetTaskRequest | tasks/get} request.
  *
+ * @example Working task
+ * {@includeCode ./examples/GetTaskResult/working-task.json}
+ *
+ * @example Completed task
+ * {@includeCode ./examples/GetTaskResult/completed-task.json}
+ *
+ * @example Input required task
+ * {@includeCode ./examples/GetTaskResult/input-required-task.json}
+ *
+ * @example Failed task
+ * {@includeCode ./examples/GetTaskResult/failed-task.json}
+ *
  * @category `tasks/get`
  */
-export type GetTaskResult = Result & Task;
+export interface GetTaskResult extends Result {
+  /**
+   * The task metadata object.
+   */
+  task: Task;
+
+  /**
+   * Outstanding server-to-client requests that the client must fulfill.
+   * Present only when the task status is `input_required`.
+   */
+  inputRequests?: InputRequests;
+
+  /**
+   * The final result of the task.
+   * Present only when the task status is `completed`.
+   */
+  result?: JSONObject;
+
+  /**
+   * The error that caused the task to fail.
+   * Present only when the task status is `failed`.
+   */
+  error?: JSONObject;
+}
 
 /**
  * A successful response for a {@link GetTaskRequest | tasks/get} request.
+ *
+ * @example Working task response
+ * {@includeCode ./examples/GetTaskResultResponse/working-task-response.json}
  *
  * @category `tasks/get`
  */
@@ -1987,97 +1977,10 @@ export interface GetTaskResultResponse extends JSONRPCResultResponse {
 }
 
 /**
- * A request to retrieve the result of a completed task, or to discover
- * what input is needed for a task in `input_required` status.
- *
- * @example Get task payload request
- * {@includeCode ./examples/GetTaskPayloadRequest/get-task-payload-request.json}
- *
- * @category `tasks/result`
- */
-export interface GetTaskPayloadRequest extends JSONRPCRequest {
-  method: "tasks/result";
-  params: {
-    /**
-     * The task identifier to retrieve results for.
-     */
-    taskId: string;
-  };
-}
-
-/**
- * The result returned for a {@link GetTaskPayloadRequest | tasks/result} request.
- * The structure matches the result type of the original request.
- * For example, a {@link CallToolRequest | tools/call} task would return the {@link CallToolResult} structure.
- *
- * When the task is in `input_required` status, the server MUST return an
- * {@link IncompleteResult} containing `inputRequests` that the client must
- * fulfill via a {@link TaskInputResponseRequest | tasks/input_response} request.
- *
- * @example Completed task payload
- * {@includeCode ./examples/GetTaskPayloadResult/completed-task-payload.json}
- *
- * @category `tasks/result`
- */
-export interface GetTaskPayloadResult extends Result {
-  [key: string]: unknown;
-}
-
-/**
- * A successful response for a {@link GetTaskPayloadRequest | tasks/result} request.
- * May be either a complete result or an {@link IncompleteResult} indicating
- * that additional input is needed via {@link TaskInputResponseRequest | tasks/input_response}.
- *
- * @example Completed task payload response
- * {@includeCode ./examples/GetTaskPayloadResultResponse/completed-task-payload-response.json}
- *
- * @example Input required task payload response
- * {@includeCode ./examples/GetTaskPayloadResultResponse/input-required-task-payload-response.json}
- *
- * @category `tasks/result`
- */
-export interface GetTaskPayloadResultResponse extends JSONRPCResultResponse {
-  result: GetTaskPayloadResult | IncompleteResult;
-}
-
-/**
- * A request from the client to deliver input responses for a task
- * that is in `input_required` status.
- *
- * @example Task input response request
- * {@includeCode ./examples/TaskInputResponseRequest/task-input-response-request.json}
- *
- * @category `tasks/input_response`
- */
-export interface TaskInputResponseRequest extends JSONRPCRequest {
-  method: "tasks/input_response";
-  params: TaskInputResponseRequestParams;
-}
-
-/**
- * Parameters for a `tasks/input_response` request.
- *
- * @category `tasks/input_response`
- */
-export interface TaskInputResponseRequestParams extends RequestParams {
-  /**
-   * The client's responses to the server's input requests from
-   * the {@link IncompleteResult} returned by {@link GetTaskPayloadRequest | tasks/result}.
-   */
-  inputResponses: InputResponses;
-}
-
-/**
- * A successful response for a {@link TaskInputResponseRequest | tasks/input_response} request.
- *
- * @category `tasks/input_response`
- */
-export interface TaskInputResponseResultResponse extends JSONRPCResultResponse {
-  result: Result;
-}
-
-/**
  * A request to cancel a task.
+ *
+ * @example Cancel task request
+ * {@includeCode ./examples/CancelTaskRequest/cancel-task-request.json}
  *
  * @category `tasks/cancel`
  */
@@ -2094,12 +1997,18 @@ export interface CancelTaskRequest extends JSONRPCRequest {
 /**
  * The result returned for a {@link CancelTaskRequest | tasks/cancel} request.
  *
+ * @example Cancelled task
+ * {@includeCode ./examples/CancelTaskResult/cancelled-task.json}
+ *
  * @category `tasks/cancel`
  */
 export type CancelTaskResult = Result & Task;
 
 /**
  * A successful response for a {@link CancelTaskRequest | tasks/cancel} request.
+ *
+ * @example Cancel task result response
+ * {@includeCode ./examples/CancelTaskResultResponse/cancel-task-result-response.json}
  *
  * @category `tasks/cancel`
  */
@@ -2110,6 +2019,9 @@ export interface CancelTaskResultResponse extends JSONRPCResultResponse {
 /**
  * A request to retrieve a list of tasks.
  *
+ * @example List tasks request
+ * {@includeCode ./examples/ListTasksRequest/list-tasks-request.json}
+ *
  * @category `tasks/list`
  */
 export interface ListTasksRequest extends PaginatedRequest {
@@ -2118,6 +2030,9 @@ export interface ListTasksRequest extends PaginatedRequest {
 
 /**
  * The result returned for a {@link ListTasksRequest | tasks/list} request.
+ *
+ * @example List tasks result
+ * {@includeCode ./examples/ListTasksResult/list-tasks-result.json}
  *
  * @category `tasks/list`
  */
@@ -2128,6 +2043,9 @@ export interface ListTasksResult extends PaginatedResult {
 /**
  * A successful response for a {@link ListTasksRequest | tasks/list} request.
  *
+ * @example List tasks result response
+ * {@includeCode ./examples/ListTasksResultResponse/list-tasks-result-response.json}
+ *
  * @category `tasks/list`
  */
 export interface ListTasksResultResponse extends JSONRPCResultResponse {
@@ -2137,12 +2055,18 @@ export interface ListTasksResultResponse extends JSONRPCResultResponse {
 /**
  * Parameters for a `notifications/tasks/status` notification.
  *
+ * @example Task completed params
+ * {@includeCode ./examples/TaskStatusNotificationParams/task-completed-params.json}
+ *
  * @category `notifications/tasks/status`
  */
 export type TaskStatusNotificationParams = NotificationParams & Task;
 
 /**
  * An optional notification from the receiver to the requestor, informing them that a task's status has changed. Receivers are not required to send these notifications.
+ *
+ * @example Task completed notification
+ * {@includeCode ./examples/TaskStatusNotification/task-completed-notification.json}
  *
  * @category `notifications/tasks/status`
  */
@@ -3313,35 +3237,22 @@ export type ClientRequest =
   | CallToolRequest
   | ListToolsRequest
   | GetTaskRequest
-  | GetTaskPayloadRequest
   | ListTasksRequest
-  | CancelTaskRequest
-  | TaskInputResponseRequest;
+  | CancelTaskRequest;
 
 /** @internal */
 export type ClientNotification =
   | CancelledNotification
   | ProgressNotification
   | InitializedNotification
-  | RootsListChangedNotification
-  | TaskStatusNotification;
+  | RootsListChangedNotification;
 
 /** @internal */
-export type ClientResult =
-  | EmptyResult
-  | GetTaskResult
-  | GetTaskPayloadResult
-  | ListTasksResult
-  | CancelTaskResult;
+export type ClientResult = EmptyResult;
 
 /* Server messages */
 /** @internal */
-export type ServerRequest =
-  | PingRequest
-  | GetTaskRequest
-  | GetTaskPayloadRequest
-  | ListTasksRequest
-  | CancelTaskRequest;
+export type ServerRequest = PingRequest;
 
 /** @internal */
 export type ServerNotification =
@@ -3369,7 +3280,6 @@ export type ServerResult =
   | CreateTaskResult
   | ListToolsResult
   | GetTaskResult
-  | GetTaskPayloadResult
   | ListTasksResult
   | CancelTaskResult
   | IncompleteResult;

@@ -1,0 +1,30 @@
+{
+  "result_type": "task",
+  "task": {
+    "taskId": "786512e2-9e0d-44bd-8f29-789f320fe840",
+    "status": "input_required",
+    "statusMessage": "The operation requires additional input.",
+    "createdAt": "2025-11-25T10:30:00Z",
+    "lastUpdatedAt": "2025-11-25T10:40:00Z",
+    "ttl": 60000,
+    "pollInterval": 5000
+  },
+  "inputRequests": {
+    "github_login": {
+      "method": "elicitation/create",
+      "params": {
+        "mode": "form",
+        "message": "Please provide your GitHub username",
+        "requestedSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": ["name"]
+        }
+      }
+    }
+  }
+}

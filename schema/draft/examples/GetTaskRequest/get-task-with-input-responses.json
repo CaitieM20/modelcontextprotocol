@@ -1,0 +1,16 @@
+{
+  "jsonrpc": "2.0",
+  "id": 6,
+  "method": "tasks/get",
+  "params": {
+    "taskId": "786512e2-9e0d-44bd-8f29-789f320fe840",
+    "inputResponses": {
+      "name": {
+        "action": "accept",
+        "content": {
+          "input": "Luca"
+        }
+      }
+    }
+  }
+}

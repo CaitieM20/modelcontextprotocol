@@ -1,0 +1,8 @@
+{
+  "taskId": "786512e2-9e0d-44bd-8f29-789f320fe840",
+  "status": "cancelled",
+  "statusMessage": "The task was cancelled by the client.",
+  "createdAt": "2025-11-25T10:30:00Z",
+  "lastUpdatedAt": "2025-11-25T10:45:00Z",
+  "ttl": 60000
+}

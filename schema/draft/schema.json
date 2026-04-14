@@ -165,10 +165,6 @@
                 },
                 "requestState": {
                     "type": "string"
-                },
-                "task": {
-                    "$ref": "#/$defs/TaskMetadata",
-                    "description": "If specified, the caller is requesting task-augmented execution for this request.\nThe request will return a {@link CreateTaskResult} immediately, and the actual result can be\nretrieved later via {@link GetTaskPayloadRequesttasks/result}.\n\nTask augmentation is subject to capability negotiation - receivers MUST declare support\nfor task augmentation of specific request types in their capabilities."
                 }
             },
             "required": [
@@ -226,6 +222,9 @@
                         },
                         {
                             "$ref": "#/$defs/CallToolResult"
+                        },
+                        {
+                            "$ref": "#/$defs/CreateTaskResult"
                         }
                     ]
                 }
@@ -395,46 +394,6 @@
                         }
                     },
                     "type": "object"
-                },
-                "tasks": {
-                    "description": "Present if the client supports task-augmented requests.",
-                    "properties": {
-                        "cancel": {
-                            "$ref": "#/$defs/JSONObject",
-                            "description": "Whether this client supports {@link CancelTaskRequesttasks/cancel}."
-                        },
-                        "list": {
-                            "$ref": "#/$defs/JSONObject",
-                            "description": "Whether this client supports {@link ListTasksRequesttasks/list}."
-                        },
-                        "requests": {
-                            "description": "Specifies which request types can be augmented with tasks.",
-                            "properties": {
-                                "elicitation": {
-                                    "description": "Task support for elicitation-related requests.",
-                                    "properties": {
-                                        "create": {
-                                            "$ref": "#/$defs/JSONObject",
-                                            "description": "Whether the client supports task-augmented {@link ElicitRequestelicitation/create} requests."
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "sampling": {
-                                    "description": "Task support for sampling-related requests.",
-                                    "properties": {
-                                        "createMessage": {
-                                            "$ref": "#/$defs/JSONObject",
-                                            "description": "Whether the client supports task-augmented {@link CreateMessageRequestsampling/createMessage} requests."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            },
-                            "type": "object"
-                        }
-                    },
-                    "type": "object"
                 }
             },
             "type": "object"
@@ -449,9 +408,6 @@
                 },
                 {
                     "$ref": "#/$defs/ProgressNotification"
-                },
-                {
-                    "$ref": "#/$defs/TaskStatusNotification"
                 },
                 {
                     "$ref": "#/$defs/RootsListChangedNotification"
@@ -497,12 +453,6 @@
                     "$ref": "#/$defs/GetTaskRequest"
                 },
                 {
-                    "$ref": "#/$defs/GetTaskPayloadRequest"
-                },
-                {
-                    "$ref": "#/$defs/TaskInputResponseRequest"
-                },
-                {
                     "$ref": "#/$defs/CancelTaskRequest"
                 },
                 {
@@ -517,25 +467,8 @@
             ]
         },
         "ClientResult": {
-            "anyOf": [
-                {
-                    "$ref": "#/$defs/Result"
-                },
-                {
-                    "$ref": "#/$defs/GetTaskResult",
-                    "description": "The result returned for a {@link GetTaskRequesttasks/get} request."
-                },
-                {
-                    "$ref": "#/$defs/GetTaskPayloadResult"
-                },
-                {
-                    "$ref": "#/$defs/CancelTaskResult",
-                    "description": "The result returned for a {@link CancelTaskRequesttasks/cancel} request."
-                },
-                {
-                    "$ref": "#/$defs/ListTasksResult"
-                }
-            ]
+            "$ref": "#/$defs/Result",
+            "description": "Common result fields."
         },
         "CompleteRequest": {
             "description": "A request from the client to the server, to ask for completion options.",
@@ -1231,84 +1164,6 @@
             ],
             "type": "object"
         },
-        "GetTaskPayloadRequest": {
-            "description": "A request to retrieve the result of a completed task, or to discover\nwhat input is needed for a task in `input_required` status.",
-            "properties": {
-                "id": {
-                    "$ref": "#/$defs/RequestId"
-                },
-                "jsonrpc": {
-                    "const": "2.0",
-                    "type": "string"
-                },
-                "method": {
-                    "const": "tasks/result",
-                    "type": "string"
-                },
-                "params": {
-                    "properties": {
-                        "taskId": {
-                            "description": "The task identifier to retrieve results for.",
-                            "type": "string"
-                        }
-                    },
-                    "required": [
-                        "taskId"
-                    ],
-                    "type": "object"
-                }
-            },
-            "required": [
-                "id",
-                "jsonrpc",
-                "method",
-                "params"
-            ],
-            "type": "object"
-        },
-        "GetTaskPayloadResult": {
-            "additionalProperties": {},
-            "description": "The result returned for a {@link GetTaskPayloadRequesttasks/result} request.\nThe structure matches the result type of the original request.\nFor example, a {@link CallToolRequesttools/call} task would return the {@link CallToolResult} structure.\n\nWhen the task is in `input_required` status, the server MUST return an\n{@link IncompleteResult} containing `inputRequests` that the client must\nfulfill via a {@link TaskInputResponseRequesttasks/input_response} request.",
-            "properties": {
-                "_meta": {
-                    "$ref": "#/$defs/MetaObject"
-                },
-                "result_type": {
-                    "$ref": "#/$defs/ResultType",
-                    "default": "complete",
-                    "description": "Indicates the type of the result, which allows the client to determine\nhow to parse the result object."
-                }
-            },
-            "type": "object"
-        },
-        "GetTaskPayloadResultResponse": {
-            "description": "A successful response for a {@link GetTaskPayloadRequesttasks/result} request.\nMay be either a complete result or an {@link IncompleteResult} indicating\nthat additional input is needed via {@link TaskInputResponseRequesttasks/input_response}.",
-            "properties": {
-                "id": {
-                    "$ref": "#/$defs/RequestId"
-                },
-                "jsonrpc": {
-                    "const": "2.0",
-                    "type": "string"
-                },
-                "result": {
-                    "anyOf": [
-                        {
-                            "$ref": "#/$defs/IncompleteResult"
-                        },
-                        {
-                            "$ref": "#/$defs/GetTaskPayloadResult"
-                        }
-                    ]
-                }
-            },
-            "required": [
-                "id",
-                "jsonrpc",
-                "result"
-            ],
-            "type": "object"
-        },
         "GetTaskRequest": {
             "description": "A request to retrieve the state of a task.",
             "properties": {
@@ -1325,6 +1180,10 @@
                 },
                 "params": {
                     "properties": {
+                        "inputResponses": {
+                            "$ref": "#/$defs/InputResponses",
+                            "description": "Optional field to allow the client to respond to a server's request for more information\nwhen the task is in `input_required` state."
+                        },
                         "taskId": {
                             "description": "The task identifier to query.",
                             "type": "string"
@@ -1345,15 +1204,37 @@
             "type": "object"
         },
         "GetTaskResult": {
-            "allOf": [
-                {
-                    "$ref": "#/$defs/Result"
+            "description": "The result returned for a {@link GetTaskRequesttasks/get} request.",
+            "properties": {
+                "_meta": {
+                    "$ref": "#/$defs/MetaObject"
                 },
-                {
-                    "$ref": "#/$defs/Task"
+                "error": {
+                    "$ref": "#/$defs/JSONObject",
+                    "description": "The error that caused the task to fail.\nPresent only when the task status is `failed`."
+                },
+                "inputRequests": {
+                    "$ref": "#/$defs/InputRequests",
+                    "description": "Outstanding server-to-client requests that the client must fulfill.\nPresent only when the task status is `input_required`."
+                },
+                "result": {
+                    "$ref": "#/$defs/JSONObject",
+                    "description": "The final result of the task.\nPresent only when the task status is `completed`."
+                },
+                "result_type": {
+                    "$ref": "#/$defs/ResultType",
+                    "default": "complete",
+                    "description": "Indicates the type of the result, which allows the client to determine\nhow to parse the result object."
+                },
+                "task": {
+                    "$ref": "#/$defs/Task",
+                    "description": "The task metadata object."
                 }
+            },
+            "required": [
+                "task"
             ],
-            "description": "The result returned for a {@link GetTaskRequesttasks/get} request."
+            "type": "object"
         },
         "GetTaskResultResponse": {
             "description": "A successful response for a {@link GetTaskRequesttasks/get} request.",
@@ -3284,10 +3165,11 @@
             "type": "object"
         },
         "ResultType": {
-            "description": "Indicates the type of a {@link Result} object, allowing the client to\ndetermine how to parse the response.\n\ncomplete - the request completed successfully and the result contains the final content.\nincomplete - the request is incomplete and the result contains an {@link IncompleteResult} object with instructions for the client to provide additional input before retrying the original request.",
+            "description": "Indicates the type of a {@link Result} object, allowing the client to\ndetermine how to parse the response.\n\ncomplete - the request completed successfully and the result contains the final content.\nincomplete - the request is incomplete and the result contains an {@link IncompleteResult} object with instructions for the client to provide additional input before retrying the original request.\ntask - the result contains a {@link Task} object. All responses that return a Task (e.g., `tasks/get`, `tasks/cancel`) MUST set this value.",
             "enum": [
                 "complete",
-                "incomplete"
+                "incomplete",
+                "task"
             ],
             "type": "string"
         },
@@ -3465,31 +3347,11 @@
                     "type": "object"
                 },
                 "tasks": {
-                    "description": "Present if the server supports task-augmented requests.",
+                    "description": "Present if the server supports tasks.",
                     "properties": {
-                        "cancel": {
-                            "$ref": "#/$defs/JSONObject",
-                            "description": "Whether this server supports {@link CancelTaskRequesttasks/cancel}."
-                        },
                         "list": {
                             "$ref": "#/$defs/JSONObject",
                             "description": "Whether this server supports {@link ListTasksRequesttasks/list}."
-                        },
-                        "requests": {
-                            "description": "Specifies which request types can be augmented with tasks.",
-                            "properties": {
-                                "tools": {
-                                    "description": "Task support for tool-related requests.",
-                                    "properties": {
-                                        "call": {
-                                            "$ref": "#/$defs/JSONObject",
-                                            "description": "Whether the server supports task-augmented {@link CallToolRequesttools/call} requests."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            },
-                            "type": "object"
                         }
                     },
                     "type": "object"
@@ -3539,23 +3401,8 @@
             ]
         },
         "ServerRequest": {
-            "anyOf": [
-                {
-                    "$ref": "#/$defs/PingRequest"
-                },
-                {
-                    "$ref": "#/$defs/GetTaskRequest"
-                },
-                {
-                    "$ref": "#/$defs/GetTaskPayloadRequest"
-                },
-                {
-                    "$ref": "#/$defs/CancelTaskRequest"
-                },
-                {
-                    "$ref": "#/$defs/ListTasksRequest"
-                }
-            ]
+            "$ref": "#/$defs/PingRequest",
+            "description": "A ping, issued by either the server or the client, to check that the other party is still alive. The receiver must promptly respond, or else may be disconnected."
         },
         "ServerResult": {
             "anyOf": [
@@ -3593,11 +3440,7 @@
                     "$ref": "#/$defs/CreateTaskResult"
                 },
                 {
-                    "$ref": "#/$defs/GetTaskResult",
-                    "description": "The result returned for a {@link GetTaskRequesttasks/get} request."
-                },
-                {
-                    "$ref": "#/$defs/GetTaskPayloadResult"
+                    "$ref": "#/$defs/GetTaskResult"
                 },
                 {
                     "$ref": "#/$defs/CancelTaskResult",
@@ -3825,82 +3668,6 @@
                 "status",
                 "taskId",
                 "ttl"
-            ],
-            "type": "object"
-        },
-        "TaskAugmentedRequestParams": {
-            "description": "Common params for any task-augmented request.",
-            "properties": {
-                "_meta": {
-                    "$ref": "#/$defs/RequestMetaObject"
-                },
-                "task": {
-                    "$ref": "#/$defs/TaskMetadata",
-                    "description": "If specified, the caller is requesting task-augmented execution for this request.\nThe request will return a {@link CreateTaskResult} immediately, and the actual result can be\nretrieved later via {@link GetTaskPayloadRequesttasks/result}.\n\nTask augmentation is subject to capability negotiation - receivers MUST declare support\nfor task augmentation of specific request types in their capabilities."
-                }
-            },
-            "type": "object"
-        },
-        "TaskInputResponseRequest": {
-            "description": "A request from the client to deliver input responses for a task\nthat is in `input_required` status.",
-            "properties": {
-                "id": {
-                    "$ref": "#/$defs/RequestId"
-                },
-                "jsonrpc": {
-                    "const": "2.0",
-                    "type": "string"
-                },
-                "method": {
-                    "const": "tasks/input_response",
-                    "type": "string"
-                },
-                "params": {
-                    "$ref": "#/$defs/TaskInputResponseRequestParams"
-                }
-            },
-            "required": [
-                "id",
-                "jsonrpc",
-                "method",
-                "params"
-            ],
-            "type": "object"
-        },
-        "TaskInputResponseRequestParams": {
-            "description": "Parameters for a `tasks/input_response` request.",
-            "properties": {
-                "_meta": {
-                    "$ref": "#/$defs/RequestMetaObject"
-                },
-                "inputResponses": {
-                    "$ref": "#/$defs/InputResponses",
-                    "description": "The client's responses to the server's input requests from\nthe {@link IncompleteResult} returned by {@link GetTaskPayloadRequesttasks/result}."
-                }
-            },
-            "required": [
-                "inputResponses"
-            ],
-            "type": "object"
-        },
-        "TaskInputResponseResultResponse": {
-            "description": "A successful response for a {@link TaskInputResponseRequesttasks/input_response} request.",
-            "properties": {
-                "id": {
-                    "$ref": "#/$defs/RequestId"
-                },
-                "jsonrpc": {
-                    "const": "2.0",
-                    "type": "string"
-                },
-                "result": {
-                    "$ref": "#/$defs/Result"
-                }
-            },
-            "required": [
-                "id",
-                "jsonrpc",
-                "result"
             ],
             "type": "object"
         },

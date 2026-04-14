@@ -8,16 +8,6 @@
     "elicitation": {
       "form": {},
       "url": {}
-    },
-    "tasks": {
-      "requests": {
-        "elicitation": {
-          "create": {}
-        },
-        "sampling": {
-          "createMessage": {}
-        }
-      }
     }
   },
   "clientInfo": {

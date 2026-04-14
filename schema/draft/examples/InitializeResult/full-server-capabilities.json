@@ -13,13 +13,7 @@
       "listChanged": true
     },
     "tasks": {
-      "list": {},
-      "cancel": {},
-      "requests": {
-        "tools": {
-          "call": {}
-        }
-      }
+      "list": {}
     }
   },
   "serverInfo": {

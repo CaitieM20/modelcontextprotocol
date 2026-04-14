@@ -1,0 +1,24 @@
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "result": {
+    "tasks": [
+      {
+        "taskId": "786512e2-9e0d-44bd-8f29-789f320fe840",
+        "status": "working",
+        "createdAt": "2025-11-25T10:30:00Z",
+        "lastUpdatedAt": "2025-11-25T10:40:00Z",
+        "ttl": 60000,
+        "pollInterval": 5000
+      },
+      {
+        "taskId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "status": "completed",
+        "statusMessage": "Report generation complete.",
+        "createdAt": "2025-11-25T09:00:00Z",
+        "lastUpdatedAt": "2025-11-25T09:15:00Z",
+        "ttl": null
+      }
+    ]
+  }
+}

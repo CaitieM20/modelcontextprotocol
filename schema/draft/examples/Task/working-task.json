@@ -1,0 +1,9 @@
+{
+  "taskId": "786512e2-9e0d-44bd-8f29-789f320fe840",
+  "status": "working",
+  "statusMessage": "Processing data...",
+  "createdAt": "2025-11-25T10:30:00Z",
+  "lastUpdatedAt": "2025-11-25T10:40:00Z",
+  "ttl": 60000,
+  "pollInterval": 5000
+}
