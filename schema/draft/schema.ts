@@ -388,7 +388,7 @@ export interface InputResponses {
  * before the request can be completed.
  *
  * At least one of `inputRequests` or `requestState` MUST be present.
- * @example InputRequired result with elicitation and sampling input requests and request state
+ * @example InputRequiredResult with elicitation and sampling input requests and request state
  * {@includeCode ./examples/InputRequiredResult/input-required-result-with-elicitation-and-sampling-and-request-state.json}
  *
  * @example InputRequiredResult with request state only (load shedding)
