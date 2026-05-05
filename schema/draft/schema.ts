@@ -389,10 +389,10 @@ export interface InputResponses {
  *
  * At least one of `inputRequests` or `requestState` MUST be present.
  * @example Input required result with elicitation and sampling input requests and request state
- * {@includeCode ./examples/InputRequiredResult/incomplete-result-with-elicitation-and-sampling-and-request-state.json}
+ * {@includeCode ./examples/InputRequiredResult/input-required-result-with-elicitation-and-sampling-and-request-state.json}
  *
  * @example Input required result with request state only (load shedding)
- * {@includeCode ./examples/InputRequiredResult/incomplete-result-with-request-state-only.json}
+ * {@includeCode ./examples/InputRequiredResult/input-required-result-with-request-state-only.json}
  *
  * @category Multi Round-Trip
  */
