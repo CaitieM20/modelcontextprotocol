@@ -88,13 +88,15 @@ Clients SHOULD NOT treat TTL as a polling interval that triggers automatic backg
 
 Clients MAY re-fetch if they have reason to believe the data has changed, even if the TTL has not yet expired. Examples include receiving an unexpected error on a tool call indicating that the the method was not found or the parameters were invalid.
 
+Clients MAY serve stale responses if errors occur in re-fetching results(e.g., network issues, server downtime). The TTL is a hint for how long the client can safely rely on the data, but real-world conditions may require flexibility.
+
 ### Interaction with notifications
-TTL and server-push notifications (`list_changed`, `notifications/resources/updated`) are complementary:
+TTL and server-push notifications are complementary:
 
 - A server MAY provide `ttl` without advertising `listChanged: true` in its capabilities. In this case the client relies entirely on TTL. 
 - A server MAY advertise `listChanged: true` **and** provide `ttl`. In this case the client can use the TTL to avoid unnecessary refetches between notifications, and the notification acts as an immediate invalidation signal.
 - A server MAY advertise `listChanged: true` without providing `ttl`. Behavior is unchanged from today.
-- A server SHOULD use one of the mechanisms (TTL or notifications) rather than neither, to ensure clients have some way to stay up to date.
+- Servers are encouraged to use at least one of the mechanisms (TTL or notifications) so clients have some way to stay up to date, but both are optional.
 
 ```mermaid
 sequenceDiagram
