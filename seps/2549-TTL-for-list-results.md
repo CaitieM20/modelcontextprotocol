@@ -9,11 +9,20 @@
 
 ## Abstract
 
-This SEP proposes adding an optional `ttl` (time-to-live) field to the result objects returned by `tools/list`, `prompts/list`, `resources/list`, and `resources/templates/list`. The TTL tells clients how long the response may be considered fresh before re-fetching. This allows clients to cache feature lists and poll on a predictable schedule, reducing reliance on server-push `list_changed` notifications while remaining fully backward compatible. TTL supplements rather than replaces the existing notification mechanism — both can coexist.
+This SEP proposes adding an optional `ttl` (time-to-live) field to the result objects returned by `tools/list`, `prompts/list`, `resources/list`, `resources/read`, and `resources/templates/list`. The TTL tells clients how long the response may be considered fresh before re-fetching. This allows clients to cache feature lists and poll on a predictable schedule, reducing reliance on server-push `list_changed` notifications while remaining fully backward compatible. TTL supplements rather than replaces the existing notification mechanism — both can coexist.
 
 ## Motivation
 
-Today, MCP clients discover server features by calling `tools/list`, `prompts/list`, `resources/list`, and `resources/templates/list`. These calls return the current set of features. To learn about changes, clients rely on `notifications/tools/list_changed`, `notifications/prompts/list_changed`, and `notifications/resources/list_changed` push notifications from the server.
+Today, MCP clients discover server features by invoking methods on the server. These calls return the current set of features. To learn about changes, clients rely on push notifications from the server. The below table maps the Server Method to Notification Type. 
+
+| Server Methods | Notification Type |
+|--------------- |-------------------|
+| `tools/list`   | `notifications/tools/list_changed` |
+| `prompts/list` | `notifications/prompts/list_changed` |
+| `resources/list` | `notifications/resources/list_changed` |
+| `resources/templates/list` | `notifications/resources/list_changed` |
+| `resources/read` | `notifications/resources/updated` |
+
 
 This approach has several limitations:
 
