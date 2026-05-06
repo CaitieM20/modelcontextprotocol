@@ -933,18 +933,18 @@ export interface PaginatedResult extends Result {
  */
 export interface TTLResult extends Result {
   /**
-   * An optional hint from the server indicating how long (in seconds) the
+   * A hint from the server indicating how long (in seconds) the
    * client MAY cache this response before re-fetching. Semantics are
    * analogous to HTTP Cache-Control max-age.
    *
-   * - If absent, the client has no server-provided freshness guidance and
-   *   SHOULD rely on notifications or its own heuristics.
    * - If 0, The response SHOULD be considered immediately stale, 
    *   The client MAY re-fetch every time the result is needed. 
    * - If positive, the client SHOULD consider the result fresh for this many
    *   seconds after receiving the response.
+   *
+   * @default 0
    */
-  ttl?: number;
+  ttl: number;
 }
 
 /* Resources */
