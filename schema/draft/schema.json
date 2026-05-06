@@ -1934,9 +1934,24 @@
                     "type": "array"
                 },
                 "ttl": {
-                    "default": 0,
-                    "description": "A hint from the server indicating how long (in seconds) the\nclient MAY cache this response before re-fetching. Semantics are\nanalogous to HTTP Cache-Control max-age.\n\n- If 0, The response SHOULD be considered immediately stale, \n  The client MAY re-fetch every time the result is needed. \n- If positive, the client SHOULD consider the result fresh for this many\n  seconds after receiving the response.",
-                    "type": "integer"
+                    "allOf": [
+                        {
+                            "properties": {
+                                "minimum": {
+                                    "const": 0,
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "minimum"
+                            ],
+                            "type": "object"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ],
+                    "description": "A hint from the server indicating how long (in seconds) the\nclient MAY cache this response before re-fetching. Semantics are\nanalogous to HTTP Cache-Control max-age.\n\n- If 0, The response SHOULD be considered immediately stale, \n  The client MAY re-fetch every time the result is needed. \n- If positive, the client SHOULD consider the result fresh for this many\n  seconds after receiving the response."
                 }
             },
             "required": [
@@ -2008,9 +2023,24 @@
                     "type": "array"
                 },
                 "ttl": {
-                    "default": 0,
-                    "description": "A hint from the server indicating how long (in seconds) the\nclient MAY cache this response before re-fetching. Semantics are\nanalogous to HTTP Cache-Control max-age.\n\n- If 0, The response SHOULD be considered immediately stale, \n  The client MAY re-fetch every time the result is needed. \n- If positive, the client SHOULD consider the result fresh for this many\n  seconds after receiving the response.",
-                    "type": "integer"
+                    "allOf": [
+                        {
+                            "properties": {
+                                "minimum": {
+                                    "const": 0,
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "minimum"
+                            ],
+                            "type": "object"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ],
+                    "description": "A hint from the server indicating how long (in seconds) the\nclient MAY cache this response before re-fetching. Semantics are\nanalogous to HTTP Cache-Control max-age.\n\n- If 0, The response SHOULD be considered immediately stale, \n  The client MAY re-fetch every time the result is needed. \n- If positive, the client SHOULD consider the result fresh for this many\n  seconds after receiving the response."
                 }
             },
             "required": [
@@ -2082,9 +2112,24 @@
                     "type": "array"
                 },
                 "ttl": {
-                    "default": 0,
-                    "description": "A hint from the server indicating how long (in seconds) the\nclient MAY cache this response before re-fetching. Semantics are\nanalogous to HTTP Cache-Control max-age.\n\n- If 0, The response SHOULD be considered immediately stale, \n  The client MAY re-fetch every time the result is needed. \n- If positive, the client SHOULD consider the result fresh for this many\n  seconds after receiving the response.",
-                    "type": "integer"
+                    "allOf": [
+                        {
+                            "properties": {
+                                "minimum": {
+                                    "const": 0,
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "minimum"
+                            ],
+                            "type": "object"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ],
+                    "description": "A hint from the server indicating how long (in seconds) the\nclient MAY cache this response before re-fetching. Semantics are\nanalogous to HTTP Cache-Control max-age.\n\n- If 0, The response SHOULD be considered immediately stale, \n  The client MAY re-fetch every time the result is needed. \n- If positive, the client SHOULD consider the result fresh for this many\n  seconds after receiving the response."
                 }
             },
             "required": [
@@ -2288,9 +2333,24 @@
                     "type": "array"
                 },
                 "ttl": {
-                    "default": 0,
-                    "description": "A hint from the server indicating how long (in seconds) the\nclient MAY cache this response before re-fetching. Semantics are\nanalogous to HTTP Cache-Control max-age.\n\n- If 0, The response SHOULD be considered immediately stale, \n  The client MAY re-fetch every time the result is needed. \n- If positive, the client SHOULD consider the result fresh for this many\n  seconds after receiving the response.",
-                    "type": "integer"
+                    "allOf": [
+                        {
+                            "properties": {
+                                "minimum": {
+                                    "const": 0,
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "minimum"
+                            ],
+                            "type": "object"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ],
+                    "description": "A hint from the server indicating how long (in seconds) the\nclient MAY cache this response before re-fetching. Semantics are\nanalogous to HTTP Cache-Control max-age.\n\n- If 0, The response SHOULD be considered immediately stale, \n  The client MAY re-fetch every time the result is needed. \n- If positive, the client SHOULD consider the result fresh for this many\n  seconds after receiving the response."
                 }
             },
             "required": [
@@ -2899,9 +2959,24 @@
                     "type": "array"
                 },
                 "ttl": {
-                    "default": 0,
-                    "description": "A hint from the server indicating how long (in seconds) the\nclient MAY cache this response before re-fetching. Semantics are\nanalogous to HTTP Cache-Control max-age.\n\n- If 0, The response SHOULD be considered immediately stale, \n  The client MAY re-fetch every time the result is needed. \n- If positive, the client SHOULD consider the result fresh for this many\n  seconds after receiving the response.",
-                    "type": "integer"
+                    "allOf": [
+                        {
+                            "properties": {
+                                "minimum": {
+                                    "const": 0,
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "minimum"
+                            ],
+                            "type": "object"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ],
+                    "description": "A hint from the server indicating how long (in seconds) the\nclient MAY cache this response before re-fetching. Semantics are\nanalogous to HTTP Cache-Control max-age.\n\n- If 0, The response SHOULD be considered immediately stale, \n  The client MAY re-fetch every time the result is needed. \n- If positive, the client SHOULD consider the result fresh for this many\n  seconds after receiving the response."
                 }
             },
             "required": [
@@ -3752,9 +3827,24 @@
                     "$ref": "#/$defs/MetaObject"
                 },
                 "ttl": {
-                    "default": 0,
-                    "description": "A hint from the server indicating how long (in seconds) the\nclient MAY cache this response before re-fetching. Semantics are\nanalogous to HTTP Cache-Control max-age.\n\n- If 0, The response SHOULD be considered immediately stale, \n  The client MAY re-fetch every time the result is needed. \n- If positive, the client SHOULD consider the result fresh for this many\n  seconds after receiving the response.",
-                    "type": "integer"
+                    "allOf": [
+                        {
+                            "properties": {
+                                "minimum": {
+                                    "const": 0,
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "minimum"
+                            ],
+                            "type": "object"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ],
+                    "description": "A hint from the server indicating how long (in seconds) the\nclient MAY cache this response before re-fetching. Semantics are\nanalogous to HTTP Cache-Control max-age.\n\n- If 0, The response SHOULD be considered immediately stale, \n  The client MAY re-fetch every time the result is needed. \n- If positive, the client SHOULD consider the result fresh for this many\n  seconds after receiving the response."
                 }
             },
             "required": [

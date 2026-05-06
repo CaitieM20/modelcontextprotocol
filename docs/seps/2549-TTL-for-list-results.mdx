@@ -79,7 +79,7 @@ export interface TTLResult extends Result {
    * - If positive, the client SHOULD consider the result fresh for this many
    *   seconds after receiving the response.
    */
-  ttl: number;
+  ttl: number & { readonly minimum: 0 };
 }
 ```
 
@@ -90,6 +90,8 @@ export interface TTLResult extends Result {
 A TTL is a freshness estimate, not a guarantee. Servers MAY change the underlying list before the TTL expires; servers that do so and have advertised listChanged SHOULD send the corresponding notification.
 
 Servers MUST provide a `ttl` on `Results` returned by `tools/list`, `prompts/list`, `resources/list`, `resources/read`, and `resources/templates/list`.
+
+`ttl` MUST be >= 0. If a server returns a negative value, clients SHOULD ignore it and treat it as 0 (immediately stale).
 
 | Condition                                          | Client behavior                                                                                               |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |

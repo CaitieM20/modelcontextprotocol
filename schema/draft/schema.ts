@@ -941,10 +941,8 @@ export interface TTLResult extends Result {
    *   The client MAY re-fetch every time the result is needed. 
    * - If positive, the client SHOULD consider the result fresh for this many
    *   seconds after receiving the response.
-   *
-   * @default 0
    */
-  ttl: number;
+  ttl: number & { readonly minimum: 0 };
 }
 
 /* Resources */
