@@ -5,20 +5,24 @@ description: "TTL for List Results"
 ---
 
 <div className="flex items-center gap-2 mb-4">
-  <Badge color="gray" shape="pill">Accepted with Changes</Badge>
-  <Badge color="gray" shape="pill">Standards Track</Badge>
+  <Badge color="gray" shape="pill">
+    Accepted with Changes
+  </Badge>
+  <Badge color="gray" shape="pill">
+    Standards Track
+  </Badge>
 </div>
 
-| Field | Value |
-|-------|-------|
-| **SEP** | 2549 |
-| **Title** | TTL for List Results |
-| **Status** | Accepted with Changes |
-| **Type** | Standards Track |
-| **Created** | 2026-04-09 |
-| **Author(s)** | Caitie McCaffrey ([@CaitieM20](https://github.com/CaitieM20)) |
-| **Sponsor** | [@CaitieM20](https://github.com/CaitieM20) |
-| **PR** | [#2549](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2549) |
+| Field         | Value                                                                           |
+| ------------- | ------------------------------------------------------------------------------- |
+| **SEP**       | 2549                                                                            |
+| **Title**     | TTL for List Results                                                            |
+| **Status**    | Accepted with Changes                                                           |
+| **Type**      | Standards Track                                                                 |
+| **Created**   | 2026-04-09                                                                      |
+| **Author(s)** | Caitie McCaffrey ([@CaitieM20](https://github.com/CaitieM20))                   |
+| **Sponsor**   | [@CaitieM20](https://github.com/CaitieM20)                                      |
+| **PR**        | [#2549](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2549) |
 
 ---
 
@@ -26,20 +30,17 @@ description: "TTL for List Results"
 
 This SEP proposes adding an optional `ttl` (time-to-live) field to the result objects returned by `tools/list`, `prompts/list`, `resources/list`, `resources/read`, and `resources/templates/list`. The TTL tells clients how long the response may be considered fresh before re-fetching. This allows clients to cache feature lists and poll on a predictable schedule, reducing reliance on server-push `list_changed` notifications while remaining fully backward compatible. TTL supplements rather than replaces the existing notification mechanism — both can coexist.
 
-A new `TTLResult` interface is introduced as a standalone mixin type that owns the `ttl` field. List result types extend both `PaginatedResult` and `TTLResult`, while `ReadResourceResult` extends `TTLResult` directly. This separation of concerns keeps pagination and caching orthogonal and avoids polluting unrelated result types (e.g., `ListTasksResult`) with TTL semantics.
-
 ## Motivation
 
-Today, MCP clients discover server features by invoking methods on the server. These calls return the current set of features. To learn about changes, clients rely on push notifications from the server. The below table maps the Server Method to Notification Type. 
+Today, MCP clients discover server features by invoking methods on the server. These calls return the current set of features. To learn about changes, clients rely on push notifications from the server. The below table maps the Server Method to Notification Type.
 
-| Server Methods | Notification Type |
-|--------------- |-------------------|
-| `tools/list`   | `notifications/tools/list_changed` |
-| `prompts/list` | `notifications/prompts/list_changed` |
-| `resources/list` | `notifications/resources/list_changed` |
+| Server Methods             | Notification Type                      |
+| -------------------------- | -------------------------------------- |
+| `tools/list`               | `notifications/tools/list_changed`     |
+| `prompts/list`             | `notifications/prompts/list_changed`   |
+| `resources/list`           | `notifications/resources/list_changed` |
 | `resources/templates/list` | `notifications/resources/list_changed` |
-| `resources/read` | `notifications/resources/updated` |
-
+| `resources/read`           | `notifications/resources/updated`      |
 
 This approach has several limitations:
 
@@ -61,7 +62,7 @@ A new `TTLResult` interface is introduced as a standalone type extending `Result
 
 #### Schema change (TypeScript)
 
-```typescript
+````typescript
 /**
  * A result that supports a time-to-live (TTL) hint for client-side caching.
  *
@@ -108,7 +109,7 @@ Clients MAY re-fetch if they have reason to believe the data has changed, even i
 ### Interaction with notifications
 TTL and server-push notifications (`list_changed`, `notifications/resources/updated`) are complementary:
 
-- A server MAY provide `ttl` without advertising `listChanged: true` in its capabilities. In this case the client relies entirely on TTL. 
+- A server MAY provide `ttl` without advertising `listChanged: true` in its capabilities. In this case the client relies entirely on TTL.
 - A server MAY advertise `listChanged: true` **and** provide `ttl`. In this case the client can use the TTL to avoid unnecessary refetches between notifications, and the notification acts as an immediate invalidation signal.
 - A server MAY advertise `listChanged: true` without providing `ttl`. Behavior is unchanged from today.
 - A server SHOULD use one of the mechanisms (TTL or notifications) rather than neither, to ensure clients have some way to stay up to date.
@@ -135,7 +136,7 @@ sequenceDiagram
     Note over C: Invalidate cache immediately
     C->>S: tools/list
     S-->>C: { tools: [...], ttl: 300 }
-```
+````
 
 ### Interaction with pagination
 
@@ -146,7 +147,7 @@ When a list result includes `nextCursor` (indicating more pages), the `ttl` appl
 
 ### No new capability flag
 
-No new capability flag is needed. The `ttl` field is optional on the response object. Servers that do not wish to provide a TTL simply omit the field. 
+No new capability flag is needed. The `ttl` field is optional on the response object. Servers that do not wish to provide a TTL simply omit the field.
 
 ### Error handling
 
@@ -155,32 +156,24 @@ No new capability flag is needed. The `ttl` field is optional on the response ob
 
 ## Rationale
 
-### Why introduce a separate `TTLResult` type rather than adding `ttl` to `PaginatedResult`?
-
-Placing `ttl` on `PaginatedResult` would cause every paginated result type to inherit it, including types where TTL semantics are inappropriate (e.g., `ListTasksResult`, which is being removed in the move to stateless transports). A standalone `TTLResult` interface keeps caching concerns orthogonal to pagination, allows non-paginated results like `ReadResourceResult` to opt in cleanly, and ensures future result types can choose to adopt TTL independently of whether they support pagination.
-
-### Why also support TTL on `resources/read`?
-
-Resource contents can be expensive to fetch (e.g., large files, remote APIs). A TTL on `ReadResourceResult` lets servers signal how long the content is valid, enabling clients to avoid redundant fetches. This complements the existing `notifications/resources/updated` notification — the TTL provides freshness guidance for stateless transports or when notifications are unavailable.
-
 ### Why not replace `list_changed` notifications?
 
 Notifications provide immediate invalidation which is valuable for long-lived connections. TTL provides a complementary mechanism optimized for stateless transports and for reducing unnecessary polling. Both mechanisms serve different use cases and coexist naturally.
 
 ### Prior art
 
-| System                         | Mechanism              | Notes                                                              |
-| ------------------------------ | ---------------------- | ------------------------------------------------------------------ |
-| HTTP `Cache-Control: max-age`  | Integer seconds        | The most widely deployed freshness hint in web infrastructure      |
-| DNS TTL                        | Integer seconds        | Controls how long resolvers cache DNS records                      |
-| GraphQL `@cacheControl`        | `maxAge` integer secs  | Per-field cache hints in GraphQL responses                         |
-| gRPC `grpc-retry-pushback-ms`  | Milliseconds           | Server-provided retry hint (different use case, similar pattern)   |
+| System                        | Mechanism             | Notes                                                            |
+| ----------------------------- | --------------------- | ---------------------------------------------------------------- |
+| HTTP `Cache-Control: max-age` | Integer seconds       | The most widely deployed freshness hint in web infrastructure    |
+| DNS TTL                       | Integer seconds       | Controls how long resolvers cache DNS records                    |
+| GraphQL `@cacheControl`       | `maxAge` integer secs | Per-field cache hints in GraphQL responses                       |
+| gRPC `grpc-retry-pushback-ms` | Milliseconds          | Server-provided retry hint (different use case, similar pattern) |
 
 Integer seconds is the most common representation across these systems.
 
 ### Why not use HTTP caching directly?
 
-MCP is transport-agnostic. While HTTP-based transports could theoretically use `Cache-Control` headers, MCP also operates over stdio,  and supports pluggable transports where HTTP headers may not be available. Embedding the TTL in the JSON response body ensures it works uniformly across all transports.
+MCP is transport-agnostic. While HTTP-based transports could theoretically use `Cache-Control` headers, MCP also operates over stdio, and supports pluggable transports where HTTP headers may not be available. Embedding the TTL in the JSON response body ensures it works uniformly across all transports.
 
 ## Backward Compatibility
 
@@ -203,5 +196,3 @@ _No reference implementation yet._
    - Integer seconds (e.g., `300`) are simpler, consistent with HTTP `max-age` and DNS TTLs, and trivial to compare.
    - ISO 8601 duration strings (e.g., `"PT5M"`) are more human-readable and self-documenting.
    - Current recommendation: integer seconds, but community feedback is welcome.
-
-

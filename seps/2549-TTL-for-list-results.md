@@ -11,8 +11,6 @@
 
 This SEP proposes adding an optional `ttl` (time-to-live) field to the result objects returned by `tools/list`, `prompts/list`, `resources/list`, `resources/read`, and `resources/templates/list`. The TTL tells clients how long the response may be considered fresh before re-fetching. This allows clients to cache feature lists and poll on a predictable schedule, reducing reliance on server-push `list_changed` notifications while remaining fully backward compatible. TTL supplements rather than replaces the existing notification mechanism — both can coexist.
 
-A new `TTLResult` interface is introduced as a standalone mixin type that owns the `ttl` field. List result types extend both `PaginatedResult` and `TTLResult`, while `ReadResourceResult` extends `TTLResult` directly. This separation of concerns keeps pagination and caching orthogonal and avoids polluting unrelated result types (e.g., `ListTasksResult`) with TTL semantics.
-
 ## Motivation
 
 Today, MCP clients discover server features by invoking methods on the server. These calls return the current set of features. To learn about changes, clients rely on push notifications from the server. The below table maps the Server Method to Notification Type. 
@@ -139,14 +137,6 @@ No new capability flag is needed. The `ttl` field is optional on the response ob
 - Clients MUST NOT treat a missing `ttl` as an implicit TTL of 0 or any other value.
 
 ## Rationale
-
-### Why introduce a separate `TTLResult` type rather than adding `ttl` to `PaginatedResult`?
-
-Placing `ttl` on `PaginatedResult` would cause every paginated result type to inherit it, including types where TTL semantics are inappropriate (e.g., `ListTasksResult`, which is being removed in the move to stateless transports). A standalone `TTLResult` interface keeps caching concerns orthogonal to pagination, allows non-paginated results like `ReadResourceResult` to opt in cleanly, and ensures future result types can choose to adopt TTL independently of whether they support pagination.
-
-### Why also support TTL on `resources/read`?
-
-Resource contents can be expensive to fetch (e.g., large files, remote APIs). A TTL on `ReadResourceResult` lets servers signal how long the content is valid, enabling clients to avoid redundant fetches. This complements the existing `notifications/resources/updated` notification — the TTL provides freshness guidance for stateless transports or when notifications are unavailable.
 
 ### Why not replace `list_changed` notifications?
 
