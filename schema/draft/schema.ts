@@ -1008,12 +1008,28 @@ export interface TTLResult extends Result {
    * client MAY cache this response before re-fetching. Semantics are
    * analogous to HTTP Cache-Control max-age.
    *
-   * - If 0, The response SHOULD be considered immediately stale, 
-   *   The client MAY re-fetch every time the result is needed. 
+   * - If 0, The response SHOULD be considered immediately stale,
+   *   The client MAY re-fetch every time the result is needed.
    * - If positive, the client SHOULD consider the result fresh for this many
    *   seconds after receiving the response.
+   *
+   * @minimum 0
    */
-  ttl: number & { readonly minimum: 0 };
+  ttl?: number;
+
+  /**
+   * Indicates the intended scope of the cached response, analogous to HTTP
+   * `Cache-Control: public` vs `Cache-Control: private`.
+   *
+   * - `"public"`: Any client or intermediary (e.g., shared gateway, proxy)
+   *   MAY cache the response and serve it to any user.
+   * - `"private"`: Only the requesting user's client MAY cache the response.
+   *   Shared caches (e.g., multi-tenant gateways) MUST NOT serve a cached
+   *   copy to a different user.
+   *
+   * Defaults to `"public"` if absent.
+   */
+  cacheScope?: "public" | "private";
 }
 
 /* Resources */

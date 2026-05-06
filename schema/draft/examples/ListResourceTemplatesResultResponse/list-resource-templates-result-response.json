@@ -17,6 +17,8 @@
           }
         ]
       }
-    ]
+    ],
+    "ttl": 3600,
+    "cacheScope": "public"
   }
 }
