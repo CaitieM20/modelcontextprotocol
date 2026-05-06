@@ -58,26 +58,26 @@ export interface TTLResult extends Result {
    *
    * - If absent, the client has no server-provided freshness guidance and
    *   SHOULD rely on notifications or its own heuristics.
-   * - If 0, the client SHOULD re-fetch every time the result is needed and
-   *   SHOULD NOT serve a cached copy.
+   * - If 0, The response SHOULD be considered immediately stale, The client
+   *   MAY re-fetch every time the result is needed. 
    * - If positive, the client SHOULD consider the result fresh for this many
-   *   seconds after receiving the response. The client SHOULD NOT re-fetch
-   *   before the TTL expires unless it receives a relevant notification
-   *   (e.g., `list_changed` or `notifications/resources/updated`).
+   *   seconds after receiving the response.
    */
   ttl?: number;
 }
+```
 
 
 > **Open Question — TTL format**: An alternative representation is an ISO 8601 duration string (e.g., `"PT5M"` for 5 minutes). Integer seconds are simpler, consistent with HTTP `max-age`, and easier to compare arithmetically. ISO 8601 durations are more human-readable and used in some Azure/AWS APIs. Community input is welcome on which format to adopt. The remainder of this specification uses integer seconds for illustration.
 
 ### Semantics
+A TTL is a freshness estimate, not a guarantee. Servers MAY change the underlying list before the TTL expires; servers that do so and have advertised listChanged SHOULD send the corresponding notification.
 
 | Condition                                                    | Client behavior                                                                                      |
 | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| `ttl` absent                                                 | No freshness hint. Client SHOULD rely on `list_changed` / `resources/updated` notifications or poll at its own discretion. |
-| `ttl` = 0                                                    | Do not cache. Client SHOULD re-fetch every time the result is needed.                                |
-| `ttl` > 0                                                    | Client SHOULD consider the response fresh for `ttl` seconds from receipt. Client SHOULD NOT re-fetch before the TTL expires. |
+| `ttl` absent                                                 | No freshness hint. Client SHOULD rely on notifications or poll at its own discretion. |
+| `ttl` = 0                                                    | The response SHOULD be considered immediately stale, The Client MAY re-fetch every time the result is needed. |
+| `ttl` > 0                                                    | Client SHOULD consider the response fresh for `ttl` seconds from receipt. |
 | Relevant notification received while TTL is active           | The notification invalidates the cached response. Client SHOULD re-fetch regardless of remaining TTL. |
 
 #### Freshness calculation
