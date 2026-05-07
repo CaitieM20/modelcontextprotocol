@@ -38,9 +38,9 @@ Adding a TTL field to list responses solves all of these problems with a minimal
 
 ## Specification
 
-### New interface: `TTLResult`
+### New interface: `CacheableResult`
 
-A new `TTLResult` interface is introduced as a standalone type extending `Result`. It owns the `ttl` field.
+A new `CacheableResult` interface is introduced as a standalone type extending `Result`. It owns the `ttl` and `cacheScope` fields.
 
 #### Schema change (TypeScript)
 
@@ -50,7 +50,7 @@ A new `TTLResult` interface is introduced as a standalone type extending `Result
  *
  * @internal
  */
-export interface TTLResult extends Result {
+export interface CacheableResult extends Result {
   /**
    * A hint from the server indicating how long (in seconds) the
    * client MAY cache this response before re-fetching. Semantics are

@@ -1002,7 +1002,7 @@ export interface PaginatedResult extends Result {
  *
  * @internal
  */
-export interface TTLResult extends Result {
+export interface CacheableResult extends Result {
   /**
    * A hint from the server indicating how long (in seconds) the
    * client MAY cache this response before re-fetching. Semantics are
@@ -1053,7 +1053,7 @@ export interface ListResourcesRequest extends PaginatedRequest {
  *
  * @category `resources/list`
  */
-export interface ListResourcesResult extends PaginatedResult, TTLResult {
+export interface ListResourcesResult extends PaginatedResult, CacheableResult {
   resources: Resource[];
 }
 
@@ -1090,7 +1090,7 @@ export interface ListResourceTemplatesRequest extends PaginatedRequest {
  * @category `resources/templates/list`
  */
 export interface ListResourceTemplatesResult
-  extends PaginatedResult, TTLResult {
+  extends PaginatedResult, CacheableResult {
   resourceTemplates: ResourceTemplate[];
 }
 
@@ -1152,7 +1152,7 @@ export interface ReadResourceRequest extends JSONRPCRequest {
  *
  * @category `resources/read`
  */
-export interface ReadResourceResult extends TTLResult {
+export interface ReadResourceResult extends CacheableResult {
   contents: (TextResourceContents | BlobResourceContents)[];
 }
 
@@ -1428,7 +1428,7 @@ export interface ListPromptsRequest extends PaginatedRequest {
  *
  * @category `prompts/list`
  */
-export interface ListPromptsResult extends PaginatedResult, TTLResult {
+export interface ListPromptsResult extends PaginatedResult, CacheableResult {
   prompts: Prompt[];
 }
 
@@ -1629,7 +1629,7 @@ export interface ListToolsRequest extends PaginatedRequest {
  *
  * @category `tools/list`
  */
-export interface ListToolsResult extends PaginatedResult, TTLResult {
+export interface ListToolsResult extends PaginatedResult, CacheableResult {
   tools: Tool[];
 }
 
