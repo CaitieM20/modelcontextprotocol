@@ -20,12 +20,14 @@ Servers MUST include caching hints on results returned by the following operatio
 - `resources/read`
 
 ## Cacheable Model
-Cacheable Results in MCP use two fields to provide caching hints to clients: 
+
+Cacheable Results in MCP use two fields to provide caching hints to clients:
+
 - The <b>Time-to-live (TTL) Field</b>,`ttlMs`, indicates how long the client MAY consider the result fresh.
 - The <b>Cache Scope Field</b>,`cacheScope`, indicates the intended scope of the cached response, either `"public"` or `"private"`.
 
-
 ### Time-to-Live (TTL) Field
+
 The `ttlMs` field is a hint from the server indicating how long, in
 milliseconds, the client MAY consider the result fresh. Semantics are
 analogous to HTTP `Cache-Control: max-age`.
@@ -72,6 +74,7 @@ Clients **MAY** serve stale responses if errors occur during re-fetching (e.g., 
 issues, server downtime).
 
 ### Cache Scope Field
+
 The `cacheScope` field controls who may cache a response, analogous to HTTP
 `Cache-Control: public` vs `Cache-Control: private`.
 
@@ -79,7 +82,6 @@ The `cacheScope` field controls who may cache a response, analogous to HTTP
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `"public"`  | The response does not contain user-specific data. Any client, shared gateway, or caching proxy **MAY** store and serve the cached response to any user. |
 | `"private"` | The response contains user-specific data. Only the requesting user's client **MAY** cache it. Shared caches **MUST NOT** serve it to a different user.  |
-
 
 #### Choosing a Cache Scope
 
