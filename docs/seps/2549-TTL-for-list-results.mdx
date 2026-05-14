@@ -5,20 +5,24 @@ description: "TTL for List Results"
 ---
 
 <div className="flex items-center gap-2 mb-4">
-  <Badge color="blue" shape="pill">Accepted</Badge>
-  <Badge color="gray" shape="pill">Standards Track</Badge>
+  <Badge color="blue" shape="pill">
+    Accepted
+  </Badge>
+  <Badge color="gray" shape="pill">
+    Standards Track
+  </Badge>
 </div>
 
-| Field | Value |
-|-------|-------|
-| **SEP** | 2549 |
-| **Title** | TTL for List Results |
-| **Status** | Accepted |
-| **Type** | Standards Track |
-| **Created** | 2026-04-09 |
-| **Author(s)** | Caitie McCaffrey ([@CaitieM20](https://github.com/CaitieM20)) |
-| **Sponsor** | [@CaitieM20](https://github.com/CaitieM20) |
-| **PR** | [#2549](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2549) |
+| Field         | Value                                                                           |
+| ------------- | ------------------------------------------------------------------------------- |
+| **SEP**       | 2549                                                                            |
+| **Title**     | TTL for List Results                                                            |
+| **Status**    | Accepted                                                                        |
+| **Type**      | Standards Track                                                                 |
+| **Created**   | 2026-04-09                                                                      |
+| **Author(s)** | Caitie McCaffrey ([@CaitieM20](https://github.com/CaitieM20))                   |
+| **Sponsor**   | [@CaitieM20](https://github.com/CaitieM20)                                      |
+| **PR**        | [#2549](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2549) |
 
 ---
 
@@ -216,4 +220,3 @@ _No reference implementation yet._
 ## Security Implications
 
 A misconfigured or malicious serer could set an excessively long TTL, causing clients to cache stale data for longer than desired. However, since the TTL is a hint and clients can choose to ignore it or re-fetch if they suspect changes, the security risk is minimal. Clients should be designed to handle unexpected TTL values gracefully.
-
