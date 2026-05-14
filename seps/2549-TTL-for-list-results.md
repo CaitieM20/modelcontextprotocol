@@ -184,14 +184,12 @@ Many existing systems use integer seconds for TTLs, but some (e.g., gRPC retry p
 MCP is transport-agnostic. While HTTP-based transports could theoretically use `Cache-Control` headers, MCP also operates over stdio, and supports pluggable transports where HTTP headers may not be available. Embedding the TTL in the JSON response body ensures it works uniformly across all transports.
 
 ## Backward Compatibility
-
-This change is fully backward compatible:
-
 - Existing servers that do not provide it continue to work unchanged. If a `ttlMs` field is missing, clients SHOULD assume a default ttlMs of 0 (immediately stale) and rely on their own caching heuristincs or notifications, which is the current behavior.
 - Existing clients that do not understand the field will ignore it, as MCP result objects permit additional properties via `[key: string]: unknown` on the `Result` base type.
 - `cacheScope` is required because there is no safe default for older servers. The server must explicitly declare the intended cache scope to prevent unintended caching of user-specific data.
 - No existing fields or behaviors are modified or removed.
 - No capability negotiation is required.
+- SDK Maintainers can choose to add defaults for ttl and cacheScope in their SDKs to simplify adoption, but this is not required for compliance.
 
 ## Reference Implementation
 
